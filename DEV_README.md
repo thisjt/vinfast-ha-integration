@@ -1,87 +1,105 @@
-🚘 Tài liệu Lập trình Component: VinFast EV Custom Integration
-VinFast EV Custom Integration là bộ lõi giao tiếp (Backend) viết bằng Python, giúp Home Assistant kết nối trực tiếp với máy chủ đám mây AWS IoT của VinFast.
-Khác với các tích hợp lấy dữ liệu định kỳ (Polling API) chậm chạp, hệ thống này sử dụng MQTT qua WebSockets để nhận luồng dữ liệu thời gian thực (Real-time) và sở hữu cơ chế Phục hồi Trạng thái (State Persistence) độc quyền giúp vượt qua giới hạn "Ngủ đông" của T-Box trên xe.
+# 🚘 Developer Guide: VinFast EV Custom Integration
 
-Tài liệu này cung cấp kiến trúc và hướng dẫn từng bước để các nhà phát triển tự do thêm tính năng, giải mã cảm biến mới, hoặc can thiệp sâu vào luồng dữ liệu.
+The **VinFast EV Custom Integration** is a Python-based Home Assistant integration core that connects Home Assistant directly to VinFast's AWS IoT Cloud infrastructure.
+Unlike slow polling API integrations, this system utilizes MQTT over WebSockets for real-time telemetry streaming and features a proprietary Cold Boot State Persistence engine to handle T-Box deep sleep states on vehicles.
 
-📂 1. Cấu trúc thư mục lõi
-api.py: "Trái tim" của hệ thống. Quản lý xác thực Auth0, ký chứng chỉ AWS, duy trì kết nối MQTT, tính toán luồng Trip, và quản lý file JSON lưu trữ.
+This guide provides architectural details and step-by-step instructions for developers looking to add features, decode new vehicle sensors, or modify the data pipeline.
 
-const.py: "Từ điển dịch thuật". Chứa danh sách các API Base và toàn bộ từ điển ánh xạ các mã nguyên thủy (Raw OMA-LWM2M Code) sang Cảm biến Home Assistant.
+---
 
-sensor.py: Chịu trách nhiệm tạo các Entity Sensor lên giao diện. Quản lý việc dịch các giá trị thô (như 1/0) thành ngôn ngữ con người (như Mở/Đóng), đồng thời xử lý các giới hạn về độ dài ký tự của Home Assistant.
+## 📂 1. Core Codebase Architecture
 
-button.py / device_tracker.py: Xử lý các lệnh điều khiển từ xa (Bấm còi, Mở khóa) và vẽ GPS.
+- **`api.py` / `api_auth.py` / `api_mqtt.py` / `api_helpers.py`**:
+  The heart of the integration. Manages Auth0 OAuth2 flows, AWS Cognito Identity Pools, AWS IoT certificate signing, WebSocket MQTT connection lifecycle, live trip processing, geocoding, and JSON state persistence.
 
-🧠 2. Nguyên lý Hoạt động (Core Concepts)
-A. Chuẩn OMA-LWM2M
-VinFast sử dụng chuẩn IoT OMA-LWM2M. Dữ liệu xe ném về qua MQTT có dạng chuỗi JSON chứa các object:
+- **`const.py` & `const_common.py`**:
+  The telemetry dictionaries. Contains API endpoint configurations, command definitions, and dictionary tables mapping raw OMA-LWM2M codes to Home Assistant sensor specifications.
+
+- **`model_registry.py`**:
+  Vehicle model dispatcher and fallback handler. Resolves VIN and marketing name patterns (VF3, VF5, VFe34, VF6, VF7, VF8, VF9, MPV 7) to their respective platform constants.
+
+- **`sensor.py`**:
+  Instantiates Sensor entities. Translates raw telemetry values (e.g. 0/1, discrete modes) into human-readable states while managing Home Assistant character limits.
+
+- **`button.py` / `device_tracker.py`**:
+  Implements actionable remote controls (Lock, Unlock, Horn, Lights, Climate) and GPS map tracking.
+
+- **`ai_gemini.py`**:
+  EV AI Advisor powered by Google Gemini (flash / pro models) for driving analysis, anomaly detection, and route weather suggestions.
+
+- **`map_matching.py`**:
+  Multi-stage GPS map-matching pipeline utilizing OpenStreetMap Overpass API, heading vectors, speed profiles, and perpendicular snapping.
+
+---
+
+## 🧠 2. Core Concepts
+
+### A. OMA-LWM2M Telemetry Standard
+VinFast vehicles use the OMA-LWM2M IoT standard. Telemetry sent via MQTT arrives as JSON objects:
+```json
 {"objectId": "34183", "instanceId": "1", "resourceId": "9", "value": "85"}
-Trong code, chúng ta nối chúng lại thành định dạng chuỗi: 34183_00001_00009 (Đây chính là mã gốc đại diện cho % Pin).
+```
+The integration concatenates these fields into standardized string keys:
+`34183_00001_00009` (which corresponds to Battery Percentage SOC).
 
-B. Trục dữ liệu trung tâm (self._last_data)
-Mọi dữ liệu bắt được từ MQTT sẽ được đẩy vào một Dictionary khổng lồ tên là self._last_data nằm trong class VinFastAPI (file api.py). Mọi Sensor đều "hút" dữ liệu từ Dictionary này để hiển thị.
+### B. Central Data Bus (`self._last_data`)
+Every packet received from MQTT is unpacked and updated into a central dictionary named `self._last_data` inside `VinFastAPI` (`api.py`). Sensor entities subscribe to this data bus and automatically dispatch state updates via callbacks.
 
-🛠 3. Hướng dẫn Phát triển (How-To Guides)
-Bài 1: Cách thêm một Cảm biến (Sensor) mới bắt được
-Giả sử bạn dùng công cụ Sniffer và tìm ra mã 34210_00001_00002 là cảm biến "Độ sáng màn hình" (thang đo 0-100%). Để đưa nó lên HA, bạn làm đúng 2 bước:
+---
 
-Bước 1: Khai báo vào const.py
-Tìm đến từ điển của dòng xe tương ứng (VD: VF3_SENSORS hoặc BASE_SENSORS) và thêm 1 dòng:
+## 🛠 3. Step-by-Step Development Guide
 
-Python
-    # Cấu trúc: "Mã_gốc": ("Tên hiển thị", "Đơn vị", "Icon mdi", "Device Class")
-    "34210_00001_00002": ("Độ sáng màn hình", "%", "mdi:brightness-6", None),
-Bước 2: (Tùy chọn) Dịch trạng thái trong sensor.py
-Nếu mã trả về là con số nhưng bạn muốn hiện chữ, mở sensor.py, tìm hàm process_new_data và chèn logic elif:
+### Adding a Newly Discovered Sensor
+Suppose network sniffing reveals that code `34210_00001_00002` represents "Infotainment Screen Brightness" (0–100%). To expose it in Home Assistant:
 
-Python
-            # Ví dụ biến giá trị 0/1 thành Tối/Sáng
-            elif self._device_key == "34210_00001_00002":
-                val = "Sáng tối đa" if str(val) == "100" else f"{val}%"
-Bài 2: Cách qua mặt giới hạn 255 ký tự của Home Assistant
-Home Assistant sẽ báo "Không rõ" (Unknown) / Lỗi State nếu giá trị của một cảm biến dài quá 255 ký tự (Ví dụ: Chuỗi JSON lưu tọa độ GPS).
-Cách giải quyết: Giấu dữ liệu khổng lồ đó vào thuộc tính (Attributes).
-Mở sensor.py, tìm hàm extra_state_attributes:
+#### Step 1: Register in the appropriate constants file
+Locate the relevant vehicle dictionary (e.g., in `const_common.py` or a specific model file like `const_vf8.py`) and append the definition:
+```python
+# Format: "Raw_Code": ("Display Name", "Unit", "MDI Icon", "Device Class")
+"34210_00001_00002": ("Screen Brightness", "%", "mdi:brightness-6", None),
+```
 
-Python
-    @property
-    def extra_state_attributes(self):
-        if self._device_key == "ten_bien_data_khong_lo_cua_ban":
-            return {"data_an": json.loads(self.api._last_data.get("ten_bien_data_khong_lo_cua_ban", "{}"))}
-        return None
-Sau đó, ở hàm process_new_data, ép State chính hiển thị một chuỗi ngắn (VD: "Đã tải xong").
+#### Step 2: (Optional) Value formatting in `sensor.py`
+If the raw value requires discrete string conversion, edit `_process_update` in `sensor.py`:
+```python
+elif self._device_key == "34210_00001_00002":
+    self._attr_native_value = "Maximum" if str(val) == "100" else f"{val}%"
+```
 
-Bài 3: Cách thêm logic chạy ngầm (Background Task)
-Nếu bạn muốn tính toán các số liệu như "Độ chai pin", "Dự đoán bảo dưỡng", "Theo dõi nhiệt độ"... bạn cần viết logic trong api.py.
-Có 2 điểm can thiệp chính:
+### Handling Home Assistant's 255-Character State Limit
+Home Assistant state strings are capped at 255 characters. Values exceeding this limit (such as full GPS route JSON strings or debug logs) must be placed in `extra_state_attributes`:
+```python
+elif self._device_key == "api_trip_route":
+    self._attr_native_value = "Map Data"
+    self._attr_extra_state_attributes = {"route_json": val if isinstance(val, str) else json.dumps(val)}
+```
 
-Tính toán tức thời khi có dữ liệu tới: Chèn code vào hàm _on_message().
+### Adding Background Computational Logic
+To compute derived metrics (e.g. Battery SOH degradation, trip efficiency, predictive maintenance):
+1. **Event-driven computations**: Hook into `_on_message` in `api_mqtt.py` when matching telemetry arrives.
+2. **Periodic timers**: Hook into the background maintenance loop in `_api_polling_loop` in `api.py`.
 
-Tính toán đếm lùi thời gian (như Trip) dù xe đã ngủ đông: Chèn code vào vòng lặp vô tận while self._running: trong hàm _api_polling_loop().
+---
 
-💾 4. Cơ chế State Persistence (Cold Boot Recovery)
-Để chống lại việc HA bị mất điện/Restart trong lúc xe đang đỗ và ngủ đông (không phát MQTT), hệ thống có cơ chế tự động sao lưu cấu hình vào file /config/www/vinfast_state_xxx.json mỗi 60 giây.
+## 💾 4. State Persistence (Cold Boot Recovery)
 
-Nếu bạn tạo thêm biến Logic nội bộ mới (VD: self._thoi_gian_bat_dieu_hoa):
-Bạn PHẢI đăng ký biến đó vào 2 hàm lưu trữ ở file api.py để nó không bị "quên" khi HA Restart:
+When vehicles are parked and enter deep sleep, the onboard T-Box ceases transmitting MQTT packets. To ensure Home Assistant displays accurate data after restarts:
+- State snapshots are cached locally to `/config/www/vinfast_state_[vin].json` every 60 seconds and on shutdown.
+- When creating new internal tracking variables (e.g., `self._climate_start_time`), register them in both:
+  - `_save_state(self)`: Include the variable in the persistence dictionary.
+  - `_load_state(self)`: Restore the variable from disk on initialization.
 
-Hàm _save_state(self):
-Bổ sung vào dict internal_memory:
-"thoi_gian_bat_dieu_hoa": getattr(self, '_thoi_gian_bat_dieu_hoa', None),
+---
 
-Hàm _load_state(self):
-Bổ sung để khôi phục:
-self._thoi_gian_bat_dieu_hoa = mem.get("thoi_gian_bat_dieu_hoa", None)
+## 🔍 5. Telemetry Debugging & Reverse Engineering
 
-🔍 5. Hỗ trợ Dịch ngược (Reverse Engineering Tips)
-Đối với các anh em vọc vạch muốn bắt mã OMA-LWM2M:
+The integration includes a built-in diagnostic sensor: `sensor.[model]_[vin]_debug_raw_data`.
+- All incoming raw OMA-LWM2M packets are stored in the attributes of this sensor.
+- Developers can open Home Assistant's **Developer Tools -> States** to inspect incoming telemetry codes in real time without external sniffing tools.
+- A complementary frontend diagnostic card (`vinfast-debug-card.js`) is provided for visual inspection and changelog filtering.
 
-Không cần chạy tool rời. Component này đã tích hợp sẵn một cảm biến tên là sensor.[ten_xe]_debug_raw_data.
+---
 
-Toàn bộ hàng trăm mã thô xe đẩy về đều được nén thành chuỗi JSON và nhét vào Attributes của cảm biến này.
+## 🤝 Contributing
 
-Chỉ cần vào công cụ Nhà phát triển (Developer Tools) của Home Assistant, tìm cảm biến Debug này, anh em sẽ thấy toàn bộ thông số thực tế của xe đang chạy theo Real-time để tự đối chiếu!
-
-Hãy đóng góp (Contributing)
-Nếu bạn phân tích thành công một mã mới (VD: Cảnh báo áp suất lốp thấp, Trạng thái sưởi ghế...), hãy tạo Pull Request hoặc chia sẻ từ điển const.py mới của bạn cho cộng đồng nhé! 🚀
+If you decode new OMA-LWM2M codes (e.g., ADAS alerts, heated seat states, door lock codes for new platforms), please submit a Pull Request or open an issue!

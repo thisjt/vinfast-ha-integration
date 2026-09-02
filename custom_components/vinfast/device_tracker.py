@@ -15,16 +15,16 @@ class VinFastDeviceTracker(TrackerEntity):
     def __init__(self, api):
         self.api = api
         self._attr_has_entity_name = True
-        self._attr_name = "Vị trí GPS"
+        self._attr_name = "GPS Location"
         
         # =================================================================
         model_slug = slugify(getattr(api, "vehicle_model_display", "VF")).replace("_", "")
         vin_slug = api.vin.lower() if api.vin else "unknown"
         
-        # Ép Unique ID mới
+        # Enforce unique ID
         self._attr_unique_id = f"{model_slug}_{vin_slug}_tracker"
-        # Ép Entity ID chuẩn
-        self.entity_id = f"device_tracker.{model_slug}_{vin_slug}_vi_tri_gps"
+        # Enforce entity ID
+        self.entity_id = f"device_tracker.{model_slug}_{vin_slug}_gps_location"
         # =================================================================
 
         veh_name = getattr(api, 'vehicle_name', '')

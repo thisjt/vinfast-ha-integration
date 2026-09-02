@@ -108,13 +108,13 @@ class VinFastDigitalTwin extends HTMLElement {
 
   renderEmptyTripSelector() {
       const selectEl = this.querySelector('#trip-selector');
-      if (selectEl) selectEl.innerHTML = `<option value="current">📍 Đang ghi Trip...</option>`;
+      if (selectEl) selectEl.innerHTML = `<option value="current">📍 Recording Trip...</option>`;
   }
 
   renderTripSelector() {
       const selectEl = this.querySelector('#trip-selector');
       if (!selectEl || this._tripHistory.length === 0) { this.renderEmptyTripSelector(); return; }
-      let options = `<option value="current">📍 Chuyến đi hiện tại (Live)</option>`;
+      let options = `<option value="current">📍 Current Trip (Live)</option>`;
       this._tripHistory.forEach((trip, index) => {
           let shortStart = (trip.start_address || "").split(',')[0].substring(0, 15);
           options += `<option value="${index}">🗓 ${trip.date} ${trip.start_time} - ${trip.distance}km (${shortStart}...)</option>`;
@@ -221,11 +221,11 @@ class VinFastDigitalTwin extends HTMLElement {
 
               let ratio = st.total > 0 ? (st.avail / st.total) * 100 : 0;
               let pinColor = '', statusText = '';
-              if (st.total === 0 || st.avail === 0) { pinColor = '#dc2626'; statusText = 'Hết chỗ'; }
-              else if (ratio < 30) { pinColor = '#f97316'; statusText = 'Sắp kín'; }
-              else if (ratio < 50) { pinColor = '#eab308'; statusText = 'Đông'; }
-              else if (ratio < 80) { pinColor = '#0ea5e9'; statusText = 'Trống'; }
-              else { pinColor = '#16a34a'; statusText = 'Vắng'; }
+              if (st.total === 0 || st.avail === 0) { pinColor = '#dc2626'; statusText = 'Full'; }
+              else if (ratio < 30) { pinColor = '#f97316'; statusText = 'Almost Full'; }
+              else if (ratio < 50) { pinColor = '#eab308'; statusText = 'Busy'; }
+              else if (ratio < 80) { pinColor = '#0ea5e9'; statusText = 'Available'; }
+              else { pinColor = '#16a34a'; statusText = 'Empty'; }
 
               let boltCount = st.power >= 120 ? 3 : (st.power >= 20 ? 2 : 1);
               let boltsHtml = Array(boltCount).fill(`<ha-icon icon="mdi:flash" style="--mdc-icon-size: 16px; margin: 0 -2px;"></ha-icon>`).join('');
@@ -245,12 +245,12 @@ class VinFastDigitalTwin extends HTMLElement {
                   <div style="font-family:sans-serif; min-width: 170px;">
                       <b style="font-size: 13px; color: #1e3a8a;">${st.name}</b><br>
                       <div style="margin-top: 6px; font-size: 12px;">
-                          🚗 Cách xe: <b style="color: #ef4444;">${exactDist} km</b><br>
-                          ⚡ Công suất: <b>${st.power} kW</b><br>
-                          🔌 Trụ trống: <b style="color:${pinColor}; font-size:14px;">${st.avail} / ${st.total}</b>
+                          🚗 Distance: <b style="color: #ef4444;">${exactDist} km</b><br>
+                          ⚡ Power: <b>${st.power} kW</b><br>
+                          🔌 Available: <b style="color:${pinColor}; font-size:14px;">${st.avail} / ${st.total}</b>
                       </div>
                       <a href="${navUrl}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 10px; background: #2563eb; color: white; padding: 8px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; transition: background 0.2s;">
-                          Chỉ đường
+                          Directions
                       </a>
                   </div>
               `;
@@ -280,8 +280,8 @@ class VinFastDigitalTwin extends HTMLElement {
 
     if (!this._entityPrefix) {
         for (let key in hass.states) {
-            if (key.startsWith('sensor.') && key.endsWith('_trang_thai_hoat_dong')) {
-                this._entityPrefix = key.replace('sensor.', '').replace('_trang_thai_hoat_dong', '');
+            if (key.startsWith('sensor.') && (key.endsWith('_operating_status') || (key.endsWith('_operating_status') || key.endsWith('_trang_thai_hoat_dong')))) {
+                this._entityPrefix = key.replace('sensor.', '').replace('_operating_status', '').replace('_trang_thai_hoat_dong', '');
                 break;
             }
         }
@@ -291,9 +291,115 @@ class VinFastDigitalTwin extends HTMLElement {
     
     const vinStr = p.includes('_') ? p.split('_')[1] : p;
 
+    const SLUG_ALIASES = {
+        'operating_status': ['operating_status', 'trang_thai_hoat_dong'],
+        'trang_thai_hoat_dong': ['operating_status', 'trang_thai_hoat_dong'],
+        'battery_percentage': ['battery_percentage', 'phan_tram_pin'],
+        'phan_tram_pin': ['battery_percentage', 'phan_tram_pin'],
+        'estimated_range': ['estimated_range', 'quang_duong_du_kien'],
+        'quang_duong_du_kien': ['estimated_range', 'quang_duong_du_kien'],
+        'gear_position': ['gear_position', 'vi_tri_can_so'],
+        'vi_tri_can_so': ['gear_position', 'vi_tri_can_so'],
+        'current_speed': ['current_speed', 'toc_do_hien_tai'],
+        'toc_do_hien_tai': ['current_speed', 'toc_do_hien_tai'],
+        'total_odometer': ['total_odometer', 'tong_odo', 'tong_odo_mqtt'],
+        'tong_odo': ['total_odometer', 'tong_odo', 'tong_odo_mqtt'],
+        'driver_door': ['driver_door', 'cua_tai_xe'],
+        'passenger_door': ['passenger_door', 'cua_phu'],
+        'rear_driver_door': ['rear_driver_door', 'cua_sau_tai_xe', 'cua_sau_trai'],
+        'rear_passenger_door': ['rear_passenger_door', 'cua_sau_phu', 'cua_sau_phai'],
+        'driver_window': ['driver_window', 'kinh_tai_xe', 'cua_so_tai_xe'],
+        'passenger_window': ['passenger_window', 'kinh_phu', 'cua_so_phu'],
+        'trunk': ['trunk', 'cop_sau'],
+        'hood': ['hood', 'nap_capo'],
+        'central_lock': ['central_lock', 'khoa_tong'],
+        'khoa_tong': ['central_lock', 'khoa_tong'],
+        'tire_pressure_front_left': ['tire_pressure_front_left', 'ap_suat_lop_truoc_trai'],
+        'ap_suat_lop_truoc_trai': ['tire_pressure_front_left', 'ap_suat_lop_truoc_trai'],
+        'tire_pressure_front_right': ['tire_pressure_front_right', 'ap_suat_lop_truoc_phai'],
+        'ap_suat_lop_truoc_phai': ['tire_pressure_front_right', 'ap_suat_lop_truoc_phai'],
+        'tire_pressure_rear_left': ['tire_pressure_rear_left', 'ap_suat_lop_sau_trai'],
+        'ap_suat_lop_sau_trai': ['tire_pressure_rear_left', 'ap_suat_lop_sau_trai'],
+        'tire_pressure_rear_right': ['tire_pressure_rear_right', 'ap_suat_lop_sau_phai'],
+        'ap_suat_lop_sau_phai': ['tire_pressure_rear_right', 'ap_suat_lop_sau_phai'],
+        'vehicle_location_address': ['vehicle_location_address', 'vi_tri_xe_dia_chi'],
+        'trip_distance': ['trip_distance', 'quang_duong_chuyen_di_trip'],
+        'trip_energy_consumption': ['trip_energy_consumption', 'dien_nang_tieu_thu_trip'],
+        'trip_consumption_efficiency': ['trip_consumption_efficiency', 'hieu_suat_tieu_thu_trip'],
+        'design_battery_capacity': ['design_battery_capacity', 'dung_luong_pin_thiet_ke'],
+        'announced_range_max': ['announced_range_max', 'quang_duong_cong_bo_max'],
+        'ev_ai_advisor': ['ev_ai_advisor', 'co_van_xe_dien_ai'],
+        'co_van_xe_dien_ai': ['ev_ai_advisor', 'co_van_xe_dien_ai'],
+        '12v_battery': ['12v_battery', 'pin_12v_ac_quy', 'pin_12v'],
+        'pin_12v_ac_quy': ['12v_battery', 'pin_12v_ac_quy', 'pin_12v'],
+        'security_status': ['security_status', 'trang_thai_an_ninh'],
+        'trang_thai_an_ninh': ['security_status', 'trang_thai_an_ninh'],
+        'hazard_warning_lights': ['hazard_warning_lights', 'den_nhay_canh_bao'],
+        'den_nhay_canh_bao': ['hazard_warning_lights', 'den_nhay_canh_bao'],
+        'climate_control_status': ['climate_control_status', 'trang_thai_dieu_hoa'],
+        'trang_thai_dieu_hoa': ['climate_control_status', 'trang_thai_dieu_hoa'],
+        'camp_mode': ['camp_mode', 'che_do_cam_trai_camp'],
+        'che_do_cam_trai_camp': ['camp_mode', 'che_do_cam_trai_camp'],
+        'pet_mode': ['pet_mode', 'che_do_thu_cung_pet'],
+        'che_do_thu_cung_pet': ['pet_mode', 'che_do_thu_cung_pet'],
+        'valet_mode': ['valet_mode', 'che_do_giao_xe_valet'],
+        'che_do_giao_xe_valet': ['valet_mode', 'che_do_giao_xe_valet'],
+        'charge_target': ['charge_target', 'muc_tieu_sac_target'],
+        'muc_tieu_sac_target': ['charge_target', 'muc_tieu_sac_target'],
+        'remaining_charge_time': ['remaining_charge_time', 'thoi_gian_sac_con_lai'],
+        'thoi_gian_sac_con_lai': ['remaining_charge_time', 'thoi_gian_sac_con_lai'],
+        'live_calculated_charging_power': ['live_calculated_charging_power', 'cong_suat_sac_tinh_toan_live', 'cong_suat_sac_trung_binh_lan_cuoi', 'cong_suat_sac_tram', 'cong_suat_sac'],
+        'cong_suat_sac_tinh_toan_live': ['live_calculated_charging_power', 'cong_suat_sac_tinh_toan_live', 'cong_suat_sac_trung_binh_lan_cuoi', 'cong_suat_sac_tram', 'cong_suat_sac'],
+        'total_charging_sessions': ['total_charging_sessions', 'tong_so_lan_sac'],
+        'tong_so_lan_sac': ['total_charging_sessions', 'tong_so_lan_sac'],
+        'public_station_charging_sessions': ['public_station_charging_sessions', 'so_lan_sac_tai_tram'],
+        'so_lan_sac_tai_tram': ['public_station_charging_sessions', 'so_lan_sac_tai_tram'],
+        'home_charging_sessions': ['home_charging_sessions', 'so_lan_sac_tai_nha'],
+        'so_lan_sac_tai_nha': ['home_charging_sessions', 'so_lan_sac_tai_nha'],
+        'home_charging_energy': ['home_charging_energy', 'dien_nang_sac_tai_nha'],
+        'dien_nang_sac_tai_nha': ['home_charging_energy', 'dien_nang_sac_tai_nha'],
+        'total_energy_charged': ['total_energy_charged', 'tong_dien_nang_da_sac'],
+        'tong_dien_nang_da_sac': ['total_energy_charged', 'tong_dien_nang_da_sac'],
+        'estimated_total_charging_cost': ['estimated_total_charging_cost', 'tong_chi_phi_sac_quy_doi'],
+        'tong_chi_phi_sac_quy_doi': ['estimated_total_charging_cost', 'tong_chi_phi_sac_quy_doi'],
+        'realistic_full_range_100_battery': ['realistic_full_range_100_battery', 'quang_duong_thuc_te_day_100_pin'],
+        'remaining_range_by_efficiency': ['remaining_range_by_efficiency', 'quang_duong_con_lai_theo_hieu_suat'],
+        'quang_duong_con_lai_theo_hieu_suat': ['remaining_range_by_efficiency', 'quang_duong_con_lai_theo_hieu_suat'],
+        'distance_per_1_battery': ['distance_per_1_battery', 'quang_duong_di_duoc_moi_1_pin'],
+        'quang_duong_di_duoc_moi_1_pin': ['distance_per_1_battery', 'quang_duong_di_duoc_moi_1_pin'],
+        'average_consumption_efficiency': ['average_consumption_efficiency', 'hieu_suat_tieu_thu_trung_binh_xe'],
+        'hieu_suat_tieu_thu_trung_binh_xe': ['average_consumption_efficiency', 'hieu_suat_tieu_thu_trung_binh_xe'],
+        'vehicle_model': ['vehicle_model', 'ten_dong_xe'],
+        'ten_dong_xe': ['vehicle_model', 'ten_dong_xe'],
+        'vehicle_identifier_name': ['vehicle_identifier_name', 'ten_dinh_danh_xe'],
+        'ten_dinh_danh_xe': ['vehicle_identifier_name', 'ten_dinh_danh_xe'],
+        'license_plate_secondary_name': ['license_plate_secondary_name', 'bien_so_ten_xe_phu'],
+        'bien_so_ten_xe_phu': ['license_plate_secondary_name', 'bien_so_ten_xe_phu'],
+        'current_weather': ['current_weather', 'thoi_tiet_hien_tai'],
+        'thoi_tiet_hien_tai': ['current_weather', 'thoi_tiet_hien_tai'],
+        'outside_temperature': ['outside_temperature', 'nhiet_do_ngoai_troi_gps', 'nhiet_do_ngoai_troi'],
+        'nhiet_do_ngoai_troi_gps': ['outside_temperature', 'nhiet_do_ngoai_troi_gps', 'nhiet_do_ngoai_troi'],
+        'vehicle_image_url': ['vehicle_image_url', 'hinh_anh_xe_url'],
+        'hinh_anh_xe_url': ['vehicle_image_url', 'hinh_anh_xe_url'],
+        'phanh_tay': ['electronic_parking_brake', 'phanh_tay', 'phanh_tay_dien_tu'],
+        'phanh_tay_dien_tu': ['electronic_parking_brake', 'phanh_tay', 'phanh_tay_dien_tu'],
+        'dung_luong_pin_thiet_ke': ['design_battery_capacity', 'dung_luong_pin_thiet_ke'],
+        'quang_duong_cong_bo_max': ['announced_range_max', 'quang_duong_cong_bo_max'],
+        'hieu_suat_tieu_thu_trip': ['trip_consumption_efficiency', 'hieu_suat_tieu_thu_trip'],
+        'quang_duong_chuyen_di_trip': ['trip_distance', 'quang_duong_chuyen_di_trip'],
+        'dien_nang_tieu_thu_trip': ['trip_energy_consumption', 'dien_nang_tieu_thu_trip'],
+        'kha_nang_chai_pin_theo_range_tham_khao': ['estimated_range_degradation_reference', 'kha_nang_chai_pin_theo_range_tham_khao']
+    };
+
     const getValidState = (suffix) => {
-        const s = hass.states[`sensor.${p}_${suffix}`];
-        return (s && s.state !== 'unavailable' && s.state !== 'unknown' && s.state !== '') ? s.state : null;
+        const candidates = SLUG_ALIASES[suffix] || [suffix];
+        for (const c of candidates) {
+            const s = hass.states[`sensor.${p}_${c}`];
+            if (s && s.state !== 'unavailable' && s.state !== 'unknown' && s.state !== '') {
+                return s.state;
+            }
+        }
+        return null;
     };
     
     const getAttr = (suffix, attrKey) => {
@@ -304,10 +410,10 @@ class VinFastDigitalTwin extends HTMLElement {
     const formatTimeSince = (dateString) => {
         if (!dateString) return "";
         const s = Math.floor((new Date() - new Date(dateString)) / 1000);
-        if (s < 60) return "vừa xong";
-        const m = Math.floor(s / 60); if (m < 60) return `${m} phút trước`;
-        const h = Math.floor(m / 60); if (h < 24) return `${h} giờ trước`;
-        return `${Math.floor(h / 24)} ngày trước`;
+        if (s < 60) return "just now";
+        const m = Math.floor(s / 60); if (m < 60) return `${m} mins ago`;
+        const h = Math.floor(m / 60); if (h < 24) return `${h} hours ago`;
+        return `${Math.floor(h / 24)} days ago`;
     };
 
     if (!this.content) {
@@ -321,7 +427,7 @@ class VinFastDigitalTwin extends HTMLElement {
             <div class="vf-header">
               <div class="vf-title">
                 <svg viewBox="0 0 512 512" fill="currentColor"><path d="M560 3586 c-132 -28 -185 -75 -359 -321 -208 -291 -201 -268 -201 -701 0 -361 3 -383 69 -470 58 -77 133 -109 311 -134 202 -29 185 -21 199 -84 14 -62 66 -155 119 -209 110 -113 277 -165 430 -133 141 29 269 125 328 246 l29 59 1115 0 1115 0 29 -59 c60 -123 201 -226 345 -250 253 -43 499 137 543 397 34 203 -77 409 -268 500 -69 33 -89 38 -172 41 -116 5 -198 -15 -280 -67 -116 -76 -195 -193 -214 -321 -6 -36 -12 -71 -14 -77 -5 -19 -2163 -19 -2168 0 -2 6 -8 41 -14 77 -19 128 -98 245 -214 321 -82 52 -164 72 -280 67 -82 -3 -103 -8 -168 -40 -41 -19 -94 -52 -117 -72 -55 -48 -115 -139 -137 -209 -21 -68 -13 -66 -196 -37 -69 11 -128 20 -132 20 -17 0 -82 67 -94 97 -10 23 -14 86 -14 228 l0 195 60 0 c48 0 63 4 80 22 24 26 58 10 88 -12 22 -61 40 -111 40 l-39 0 0 43 c1 23 9 65 18 93 20 58 264 406 317 453 43 37 120 61 198 61 52 0 58 -2 53 -17 -4 -10 -48 -89 -98 -177 -70 -122 -92 -170 -95 -205 -5 -56 19 -106 67 -138 l33 -23 1511 0 c867 0 1583 -4 1680 -10 308 -18 581 -60 788 -121 109 -32 268 -103 268 -119 0 -6 -27 -10 -60 -10 -68 0 -100 -21 -100 -66 0 -63 40 -84 161 -84 l79 0 0 -214 c0 -200 -1 -215 -20 -239 -13 -16 -35 -29 -58 -33 -88 -16 -113 -102 -41 -140 81 -41 228 49 259 160 8 29 11 119 8 292 l-3 249 -32 67 c-45 96 -101 152 -197 197 -235 112 -604 187 -1027 209 l-156 9 -319 203 c-176 112 -359 223 -409 246 -116 56 -239 91 -366 104 -149 15 -1977 12 -2049 -4z m800 -341 l0 -205 -335 0 -336 0 12 23 c7 12 59 104 116 205 l105 182 219 0 219 0 0 -205z m842 15 c14 -102 27 -193 27 -202 1 -17 -23 -18 -359 -18 l-360 0 0 198 c0 109 3 202 7 205 4 4 153 6 332 5 l326 -3 27 -185z m528 157 c52 -14 125 -38 161 -55 54 -24 351 -206 489 -299 l35 -23 -516 0 -516 0 -26 188 c-15 103 -27 196 -27 206 0 18 7 19 153 13 112 -5 177 -12 247 -30z m-1541 -1132 c115 -63 176 -174 169 -305 -16 -272 -334 -402 -541 -221 -20 18 -51 63 -69 99 -28 57 -33 77 -33 142 0 65 5 85 33 142 37 76 93 128 169 159 75 30 200 23 272 -16z m3091 16 c110 -42 192 -149 207 -269 18 -159 -101 -319 -264 -352 -134 -28 -285 47 -350 174 -37 72 -43 180 -14 257 35 91 107 162 200 195 55 20 162 17 221 -5z"></path></svg>
-                <span id="vf-name">Đang tải...</span>
+                <span id="vf-name">Loading...</span>
               </div>
               <div class="vf-odo"><div class="vf-odo-label">ODOMETER</div><div class="vf-odo-value"><span id="vf-odo-int"></span> <span class="vf-odo-unit">km</span></div></div>
             </div>
@@ -344,20 +450,20 @@ class VinFastDigitalTwin extends HTMLElement {
             
             <div class="vf-charging-banner" id="vf-charging-banner" style="display: none;">
                 <div class="charging-left">
-                    <div class="charging-title"><ha-icon icon="mdi:ev-plug-type2"></ha-icon><span id="vf-charge-status-text">Hệ thống đang sạc</span></div>
-                    <div class="charging-details">Giới hạn: <span id="vf-charge-limit" style="font-weight:bold; margin-left:4px;">--%</span><span style="margin:0 8px;opacity:0.5;">|</span>Công suất: <span id="vf-charge-power" style="font-weight:bold; margin-left:4px;">-- kW</span></div>
+                    <div class="charging-title"><ha-icon icon="mdi:ev-plug-type2"></ha-icon><span id="vf-charge-status-text">Charging System Active</span></div>
+                    <div class="charging-details">Limit: <span id="vf-charge-limit" style="font-weight:bold; margin-left:4px;">--%</span><span style="margin:0 8px;opacity:0.5;">|</span>Power: <span id="vf-charge-power" style="font-weight:bold; margin-left:4px;">-- kW</span></div>
                 </div>
                 <div class="charging-right">
                     <span id="vf-charge-time" class="charging-time">--</span>
-                    <div class="charging-time-label"><span>phút</span><span>còn lại</span></div>
+                    <div class="charging-time-label"><span>mins</span><span>remaining</span></div>
                 </div>
             </div>
 
             <div class="vf-remote-bar" id="vf-remote-controls">
-                <div class="remote-btn" id="btn-rc-lock" title="Khóa cửa"><ha-icon icon="mdi:lock"></ha-icon></div>
-                <div class="remote-btn" id="btn-rc-unlock" title="Mở cửa"><ha-icon icon="mdi:lock-open"></ha-icon></div>
-                <div class="remote-btn" id="btn-rc-horn" title="Bấm còi"><ha-icon icon="mdi:bullhorn"></ha-icon></div>
-                <div class="remote-btn" id="btn-rc-lights" title="Nháy đèn"><ha-icon icon="mdi:car-light-high"></ha-icon></div>
+                <div class="remote-btn" id="btn-rc-lock" title="Lock Doors"><ha-icon icon="mdi:lock"></ha-icon></div>
+                <div class="remote-btn" id="btn-rc-unlock" title="Unlock Doors"><ha-icon icon="mdi:lock-open"></ha-icon></div>
+                <div class="remote-btn" id="btn-rc-horn" title="Honk Horn"><ha-icon icon="mdi:bullhorn"></ha-icon></div>
+                <div class="remote-btn" id="btn-rc-lights" title="Flash Headlights"><ha-icon icon="mdi:car-light-high"></ha-icon></div>
             </div>
 
             <div class="vf-stats-grid">
@@ -365,35 +471,35 @@ class VinFastDigitalTwin extends HTMLElement {
               <div class="stat-box clickable" id="box-batt-range">
                 <div class="box-main">
                   <ha-icon id="icon-batt-range" icon="mdi:battery-charging-60" style="color: #10b981;"></ha-icon>
-                  <div class="stat-info"><div class="stat-label" id="lbl-batt-range">MỨC PIN</div><div class="stat-val" id="vf-stat-batt-range">--</div></div>
+                  <div class="stat-info"><div class="stat-label" id="lbl-batt-range">BATTERY</div><div class="stat-val" id="vf-stat-batt-range">--</div></div>
                 </div>
               </div>
               
               <div class="stat-box clickable" id="box-sensors">
                 <div class="box-main">
                   <ha-icon icon="mdi:car-cog" style="color: #8b5cf6;"></ha-icon>
-                  <div class="stat-info"><div class="stat-label">CẢM BIẾN</div><div class="stat-val" id="vf-stat-sensors" style="font-size: 13px;">--</div></div>
+                  <div class="stat-info"><div class="stat-label">SENSORS</div><div class="stat-val" id="vf-stat-sensors" style="font-size: 13px;">--</div></div>
                 </div>
               </div>
 
               <div class="stat-detail-container" id="detail-container-1">
                   <div class="stat-detail-content" id="detail-batt-range">
-                      <div class="detail-row"><span>Sức khỏe Pin (SOH):</span> <b id="dt-soh" style="color:#10b981;">--</b></div>
-                      <div class="detail-row"><span>Hiệu suất sạc cuối:</span> <b id="dt-charge-eff" style="color:#f59e0b;">--</b></div>
-                      <div class="detail-row"><span>Thực tế (Đầy 100%):</span> <b id="dt-range-ai" style="color:#3b82f6;">--</b></div>
+                      <div class="detail-row"><span>Battery Health (SOH):</span> <b id="dt-soh" style="color:#10b981;">--</b></div>
+                      <div class="detail-row"><span>Last Charge Efficiency:</span> <b id="dt-charge-eff" style="color:#f59e0b;">--</b></div>
+                      <div class="detail-row"><span>Realistic Full Range (100%):</span> <b id="dt-range-ai" style="color:#3b82f6;">--</b></div>
                       <div class="detail-row" style="border-bottom:none; padding-bottom:0;">
                           <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:5px;">
                               <div style="display:flex; justify-content:space-between; align-items:center; background:var(--primary-background-color, white); padding:8px 12px; border-radius:8px; border:1px solid var(--divider-color, #e2e8f0);">
-                                  <div style="display:flex; align-items:center; gap:6px; color:var(--secondary-text-color, #475569);"><ha-icon icon="mdi:leaf-off" style="color:#ef4444; --mdc-icon-size:16px;"></ha-icon>Hao hụt dự kiến:</div>
+                                  <div style="display:flex; align-items:center; gap:6px; color:var(--secondary-text-color, #475569);"><ha-icon icon="mdi:leaf-off" style="color:#ef4444; --mdc-icon-size:16px;"></ha-icon>Estimated Degradation:</div>
                                   <b id="dt-range-drop-trip" style="font-size:13px; color:#ef4444;">--</b>
                               </div>
                               <div style="display:flex; gap:6px;">
                                   <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--primary-background-color, white); padding:6px; border-radius:8px; border:1px solid var(--divider-color, #e2e8f0);">
-                                      <div style="font-size:10px; color:var(--secondary-text-color, #475569);">CẮM SẠC LÚC</div>
+                                      <div style="font-size:10px; color:var(--secondary-text-color, #475569);">PLUGGED IN AT</div>
                                       <b id="dt-charge-soc-start" style="font-size:13px; color:#3b82f6;">--%</b>
                                   </div>
                                   <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--primary-background-color, white); padding:6px; border-radius:8px; border:1px solid var(--divider-color, #e2e8f0);">
-                                      <div style="font-size:10px; color:var(--secondary-text-color, #475569);">RÚT SẠC LÚC</div>
+                                      <div style="font-size:10px; color:var(--secondary-text-color, #475569);">UNPLUGGED AT</div>
                                       <b id="dt-charge-soc-end" style="font-size:13px; color:#10b981;">--%</b>
                                   </div>
                               </div>
@@ -410,59 +516,59 @@ class VinFastDigitalTwin extends HTMLElement {
               <div class="stat-box clickable" id="box-eff">
                 <div class="box-main">
                   <ha-icon icon="mdi:leaf" style="color: #10b981;"></ha-icon>
-                  <div class="stat-info"><div class="stat-label" id="lbl-eff">HIỆU SUẤT TB</div><div class="stat-val" id="vf-stat-eff">--</div></div>
+                  <div class="stat-info"><div class="stat-label" id="lbl-eff">AVG EFFICIENCY</div><div class="stat-val" id="vf-stat-eff">--</div></div>
                 </div>
               </div>
               <div class="stat-box clickable" id="box-speed">
                 <div class="box-main">
                   <ha-icon icon="mdi:chart-bell-curve" style="color: #eab308;"></ha-icon>
-                  <div class="stat-info"><div class="stat-label">TỐC ĐỘ TỐI ƯU</div><div class="stat-val" id="vf-stat-speed">--</div></div>
+                  <div class="stat-info"><div class="stat-label">OPTIMAL SPEED</div><div class="stat-val" id="vf-stat-speed">--</div></div>
                 </div>
               </div>
 
               <div class="stat-detail-container" id="detail-container-2">
                   <div class="stat-detail-content" id="detail-eff">
-                      <div class="detail-row"><span>Tổng điện vòng đời:</span> <b id="dt-total-kwh" style="color:#f59e0b;">--</b></div>
-                      <div class="detail-row"><span>Tổng tiền sạc:</span> <b id="dt-total-cost">--</b></div>
+                      <div class="detail-row"><span>Lifetime Energy:</span> <b id="dt-total-kwh" style="color:#f59e0b;">--</b></div>
+                      <div class="detail-row"><span>Total Charge Cost:</span> <b id="dt-total-cost">--</b></div>
                   </div>
                   <div class="stat-detail-content" id="detail-speed">
-                      <div style="font-size:10px; color:var(--secondary-text-color, #64748b); margin-bottom:6px;">Phân tích theo dải tốc độ:</div>
-                      <div id="dt-speed-chart" style="display:flex; flex-direction:column; gap:4px;">Chưa đủ dữ liệu AI</div>
+                      <div style="font-size:10px; color:var(--secondary-text-color, #64748b); margin-bottom:6px;">Speed band breakdown:</div>
+                      <div id="dt-speed-chart" style="display:flex; flex-direction:column; gap:4px;">Not enough AI data</div>
                   </div>
               </div>
 
               <div class="stat-box clickable" id="box-trip">
                 <div class="box-main">
                   <ha-icon icon="mdi:map-marker-path" style="color: #8b5cf6;"></ha-icon>
-                  <div class="stat-info"><div class="stat-label">TRIP HIỆN TẠI</div><div class="stat-val" id="vf-stat-trip">--</div></div>
+                  <div class="stat-info"><div class="stat-label">CURRENT TRIP</div><div class="stat-val" id="vf-stat-trip">--</div></div>
                 </div>
               </div>
               
               <div class="stat-box clickable" id="box-charge">
                 <div class="box-main">
                   <ha-icon icon="mdi:ev-station" style="color: #f59e0b;"></ha-icon>
-                  <div class="stat-info"><div class="stat-label">LỊCH SỬ SẠC</div><div class="stat-val" id="vf-stat-charge-count">--</div></div>
+                  <div class="stat-info"><div class="stat-label">CHARGE SESSIONS</div><div class="stat-val" id="vf-stat-charge-count">--</div></div>
                 </div>
               </div>
 
               <div class="stat-detail-container" id="detail-container-3">
                   <div class="stat-detail-content" id="detail-trip">
-                      <div class="detail-row"><span>Tốc độ trung bình:</span> <b id="dt-trip-avg-speed">--</b></div>
-                      <div class="detail-row"><span>Tiêu thụ chuyến:</span> <b id="dt-trip-energy" style="color:#eab308;">--</b></div>
+                      <div class="detail-row"><span>Average Speed:</span> <b id="dt-trip-avg-speed">--</b></div>
+                      <div class="detail-row"><span>Trip Energy:</span> <b id="dt-trip-energy" style="color:#eab308;">--</b></div>
                   </div>
                   <div class="stat-detail-content" id="detail-charge" style="padding:0; overflow:hidden;">
                       <div style="padding:15px; border-bottom:1px solid var(--divider-color, #e2e8f0); display:flex; gap:10px; background:var(--secondary-background-color, #f8fafc);">
                           <div style="flex:1; background:var(--primary-background-color, white); padding:10px; border-radius:8px; border:1px solid var(--divider-color, #e2e8f0); text-align:center;">
-                              <div style="font-size:10px; color:var(--secondary-text-color, #64748b); font-weight:bold;">SẠC TRẠM</div>
+                              <div style="font-size:10px; color:var(--secondary-text-color, #64748b); font-weight:bold;">STATION</div>
                               <div style="font-size:18px; font-weight:900; color:#2563eb;" id="inline-pub-sessions">--</div>
                           </div>
                           <div style="flex:1; background:var(--primary-background-color, white); padding:10px; border-radius:8px; border:1px solid var(--divider-color, #e2e8f0); text-align:center;">
-                              <div style="font-size:10px; color:var(--secondary-text-color, #64748b); font-weight:bold;">SẠC NHÀ</div>
-                              <div style="font-size:18px; font-weight:900; color:#10b981;"><span id="inline-home-sessions">--</span><span style="font-size:11px; font-weight:normal; color:var(--secondary-text-color, #64748b);"> lần</span></div>
+                              <div style="font-size:10px; color:var(--secondary-text-color, #64748b); font-weight:bold;">HOME</div>
+                              <div style="font-size:18px; font-weight:900; color:#10b981;"><span id="inline-home-sessions">--</span><span style="font-size:11px; font-weight:normal; color:var(--secondary-text-color, #64748b);"> sessions</span></div>
                               <div style="font-size:10px; color:#10b981; font-weight:bold; margin-top:2px;"><span id="inline-home-kwh">--</span> kWh</div>
                           </div>
                       </div>
-                      <div style="padding:10px 15px; font-size:11px; font-weight:bold; color:var(--secondary-text-color, #94a3b8); text-transform:uppercase; background:var(--primary-background-color, white);">Lần sạc gần nhất</div>
+                      <div style="padding:10px 15px; font-size:11px; font-weight:bold; color:var(--secondary-text-color, #94a3b8); text-transform:uppercase; background:var(--primary-background-color, white);">Latest Charge Session</div>
                       <div id="vf-inline-charge-list" style="max-height: 200px; overflow-y: auto; background:var(--primary-background-color, white); padding:0 15px 10px 15px;"></div>
                   </div>
               </div>
@@ -472,27 +578,27 @@ class VinFastDigitalTwin extends HTMLElement {
                 <div id="vf-ai-header" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
                     <div style="display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px;">
                         <ha-icon icon="mdi:robot-outline" style="color: #60a5fa;"></ha-icon>
-                        Chuyên gia AI Đánh giá
+                        EV AI Advisor Review
                     </div>
                     <ha-icon id="vf-ai-chevron" icon="mdi:chevron-up" style="transition: transform 0.3s ease;"></ha-icon>
                 </div>
                 <div id="vf-ai-content" style="max-height: 200px; margin-top: 8px; overflow: hidden; transition: all 0.3s ease;">
                     <div id="vf-ai-text" style="font-size: 12px; line-height: 1.5; color: #e2e8f0; font-style: italic;">
-                        Đang chờ phân tích chuyến đi...
+                        Waiting for trip analysis...
                     </div>
                 </div>
             </div>
 
             <div id="vf-smart-suggestion" style="display:none; position:absolute; bottom:60px; left:50%; transform:translateX(-50%); background:var(--card-background-color, rgba(255,255,255,0.95)); backdrop-filter:blur(10px); padding:12px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.2); width:85%; z-index:1000; border:2px solid #f59e0b;">
-               <div style="font-size:11px; color:#f59e0b; font-weight:800; margin-bottom:4px; display:flex; align-items:center; gap:4px;"><ha-icon icon="mdi:alert" style="--mdc-icon-size:14px;"></ha-icon> PIN THẤP - GỢI Ý SẠC TRÊN TUYẾN</div>
+               <div style="font-size:11px; color:#f59e0b; font-weight:800; margin-bottom:4px; display:flex; align-items:center; gap:4px;"><ha-icon icon="mdi:alert" style="--mdc-icon-size:14px;"></ha-icon> LOW BATTERY - CHARGER SUGGESTION EN ROUTE</div>
                <div id="vf-suggest-name" style="font-size:14px; font-weight:bold; color:var(--primary-text-color, #1e3a8a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">--</div>
-               <div style="font-size:12px; color:var(--secondary-text-color, #475569); margin-top:2px;">Phía trước <b id="vf-suggest-dist">--</b> km • <b id="vf-suggest-power">--</b> kW • Trống: <b id="vf-suggest-avail" style="color:#16a34a;">--</b></div>
-               <button id="btn-suggest-nav" style="margin-top:8px; width:100%; background:#2563eb; color:white; border:none; border-radius:8px; padding:6px; font-weight:bold; cursor:pointer;">Dẫn đường ngay</button>
+               <div style="font-size:12px; color:var(--secondary-text-color, #475569); margin-top:2px;">Ahead <b id="vf-suggest-dist">--</b> km • <b id="vf-suggest-power">--</b> kW • Available: <b id="vf-suggest-avail" style="color:#16a34a;">--</b></div>
+               <button id="btn-suggest-nav" style="margin-top:8px; width:100%; background:#2563eb; color:white; border:none; border-radius:8px; padding:6px; font-weight:bold; cursor:pointer;">Navigate Now</button>
             </div>
 
             <div class="vf-map-container" style="position:relative; border-radius:16px; overflow:hidden; margin-top:10px; border:1px solid var(--divider-color, #e5e7eb); display:flex; flex-direction:column;">
               <div style="position:absolute; top:12px; left:12px; z-index:400; width: 70%; max-width: 300px;">
-                  <select id="trip-selector" style="width:100%; background:var(--card-background-color, rgba(255,255,255,0.95)); backdrop-filter:blur(4px); border:2px solid #2563eb; border-radius:8px; padding:8px; font-size:12px; font-weight:bold; color:var(--primary-text-color, #1e3a8a); cursor:pointer;"><option value="current">Đang tải...</option></select>
+                  <select id="trip-selector" style="width:100%; background:var(--card-background-color, rgba(255,255,255,0.95)); backdrop-filter:blur(4px); border:2px solid #2563eb; border-radius:8px; padding:8px; font-size:12px; font-weight:bold; color:var(--primary-text-color, #1e3a8a); cursor:pointer;"><option value="current">Loading...</option></select>
               </div>
               <div id="vf-map-canvas" style="width:100%; height:350px; background:var(--secondary-background-color, #e5e7eb); z-index:1;"></div>
               
@@ -500,7 +606,7 @@ class VinFastDigitalTwin extends HTMLElement {
                 .leaflet-control-attribution { display: none !important; }
               </style>
               
-              <div class="vf-address-bar" id="vf-address-container"><ha-icon icon="mdi:map-marker-radius"></ha-icon><span id="vf-current-address" style="color:var(--primary-text-color, #475569);">Đang tải dữ liệu...</span></div>
+              <div class="vf-address-bar" id="vf-address-container"><ha-icon icon="mdi:map-marker-radius"></ha-icon><span id="vf-current-address" style="color:var(--primary-text-color, #475569);">Loading data...</span></div>
               <div class="map-controls">
                 <button class="map-btn" id="btn-locate"><ha-icon icon="mdi:crosshairs-gps"></ha-icon></button>
                 <div style="height:1px;background:var(--divider-color, #ccc);margin:4px 0;"></div>
@@ -644,7 +750,7 @@ class VinFastDigitalTwin extends HTMLElement {
                   </div>`;
               });
           } else {
-              html = `<div style="padding:10px; text-align:center; color:var(--secondary-text-color, #6b7280); font-size:11px;">Chưa có dữ liệu sạc trạm.</div>`;
+              html = `<div style="padding:10px; text-align:center; color:var(--secondary-text-color, #6b7280); font-size:11px;">No public charging data available.</div>`;
           }
           
           const pSessions = this.querySelector('#inline-pub-sessions');
@@ -742,7 +848,7 @@ class VinFastDigitalTwin extends HTMLElement {
       if(btnReplay && iconReplay) {
           btnReplay.onclick = () => {
               if (!this._map || !this._marker || !this._polyline) return;
-              if (this._smoothedRouteCoords.length < 2) return alert("Lộ trình hiện tại quá ngắn để phát lại!");
+              if (this._smoothedRouteCoords.length < 2) return alert("Current route is too short to replay!");
 
               if (this._isReplaying && !this._isPaused) {
                   this._isPaused = true;
@@ -836,7 +942,7 @@ class VinFastDigitalTwin extends HTMLElement {
     const lat = parseFloat(getValidState('vi_do_latitude') || 0);
     const lon = parseFloat(getValidState('kinh_do_longitude') || 0);
 
-    // --- BẢN VÁ: Lọc triệt để tên xe lỗi ---
+    // --- PATCH: Filter out invalid vehicle names ---
     let name = getValidState('bien_so_ten_xe_phu');
     if (!name || name === "0" || name === "1" || name.toLowerCase() === "unknown" || name === "none" || name.toLowerCase() === "vinfast") {
         name = getValidState('ten_dinh_danh_xe');
@@ -869,7 +975,7 @@ class VinFastDigitalTwin extends HTMLElement {
         if (!aiAdvisor || aiAdvisor === 'DISABLED' || aiAdvisor === 'unavailable') {
             aiContainer.style.display = 'none'; 
         } 
-        else if (!aiAdvisor.includes('Hệ thống AI đang chờ') && !aiAdvisor.includes('Vui lòng nhập Google') && !aiAdvisor.includes('waiting')) {
+        else if (!aiAdvisor.toLowerCase().includes('waiting') && !aiAdvisor.toLowerCase().includes('please enter')) {
             aiTextEl.innerText = aiAdvisor;
             aiContainer.style.display = 'block'; 
             if (this._lastAiMessage !== aiAdvisor) {
@@ -944,44 +1050,44 @@ class VinFastDigitalTwin extends HTMLElement {
         }
     }
 
-    const checkSensorState = (slugs, targetState) => {
-        for (let s of slugs) {
-            const state = getValidState(s);
-            if (state && state.toLowerCase() === targetState.toLowerCase()) return true;
+    const checkSensorState = (slugList, targetVal) => {
+        for (let s of slugList) {
+            const val = getValidState(s);
+            if (val && val.toLowerCase().includes(targetVal)) return true;
         }
         return false;
     };
 
     const doorsConfig = [
-        { slugs: ['cua_tai_xe'], name: 'Cửa lái', icon: 'mdi:car-door' },
-        { slugs: ['cua_phu'], name: 'Cửa phụ', icon: 'mdi:car-door' },
-        { slugs: ['cua_sau_tai_xe', 'cua_sau_trai'], name: 'Cửa sau T', icon: 'mdi:car-door' },
-        { slugs: ['cua_sau_phu', 'cua_sau_phai'], name: 'Cửa sau P', icon: 'mdi:car-door' },
-        { slugs: ['cop_sau'], name: 'Cốp sau', icon: 'mdi:car-back' },
-        { slugs: ['nap_capo'], name: 'Capo', icon: 'mdi:car' },
-        { slugs: ['kinh_tai_xe', 'cua_so_tai_xe'], name: 'Kính lái', icon: 'mdi:window-open' }
+        { slugs: ['driver_door', 'cua_tai_xe'], name: 'Driver Door', icon: 'mdi:car-door' },
+        { slugs: ['passenger_door', 'cua_phu'], name: 'Passenger Door', icon: 'mdi:car-door' },
+        { slugs: ['rear_driver_door', 'cua_sau_tai_xe', 'cua_sau_trai'], name: 'Rear Driver Door', icon: 'mdi:car-door' },
+        { slugs: ['rear_passenger_door', 'cua_sau_phu', 'cua_sau_phai'], name: 'Rear Pass. Door', icon: 'mdi:car-door' },
+        { slugs: ['trunk', 'cop_sau'], name: 'Trunk', icon: 'mdi:car-back' },
+        { slugs: ['hood', 'nap_capo'], name: 'Hood', icon: 'mdi:car-door' },
+        { slugs: ['driver_window', 'kinh_tai_xe', 'cua_so_tai_xe'], name: 'Driver Window', icon: 'mdi:window-open' }
     ];
 
-    const openDoors = doorsConfig.filter(d => checkSensorState(d.slugs, 'mở') || checkSensorState(d.slugs, 'đang mở'));
-    const isParked = statusTextRaw.toLowerCase().includes('đỗ') || gear.includes('P');
-    const isUnlocked = checkSensorState(['khoa_tong'], 'mở khóa');
+    const openDoors = doorsConfig.filter(d => checkSensorState(d.slugs, 'open'));
+    const isParked = statusTextRaw.toLowerCase().includes('park') || gear.includes('P');
+    const isUnlocked = checkSensorState(['central_lock', 'khoa_tong'], 'unlocked');
 
     const doorsEl = this.querySelector('#vf-doors-container');
     if (doorsEl) {
         let securityHtml = '';
         if (openDoors.length === 0 && (!isParked || !isUnlocked)) {
-            securityHtml = `<div class="door-badge" style="color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(255,255,255,0.7);"><ha-icon icon="mdi:shield-check-outline"></ha-icon> An toàn</div>`;
+            securityHtml = `<div class="door-badge" style="color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(255,255,255,0.7);"><ha-icon icon="mdi:shield-check-outline"></ha-icon> Secure</div>`;
         } else {
             if (openDoors.length > 0) securityHtml += openDoors.map(d => `<div class="door-badge open"><ha-icon icon="${d.icon}"></ha-icon> ${d.name}</div>`).join('');
-            if (isParked && isUnlocked) securityHtml += `<div class="door-badge open warning"><ha-icon icon="mdi:lock-open-alert"></ha-icon> Chưa khóa xe</div>`;
+            if (isParked && isUnlocked) securityHtml += `<div class="door-badge open warning"><ha-icon icon="mdi:lock-open-alert"></ha-icon> Vehicle Unlocked</div>`;
         }
         doorsEl.innerHTML = securityHtml;
     }
 
     const chargingBanner = this.querySelector('#vf-charging-banner');
-    const isCharging = statusTextRaw && (statusTextRaw.toLowerCase().includes('sạc') || statusTextRaw.toLowerCase().includes('hoàn tất'));
+    const isCharging = statusTextRaw && statusTextRaw.toLowerCase().includes('charging');
     
-    if (isCharging && chargingBanner && !statusTextRaw.toLowerCase().includes('không')) {
+    if (isCharging && chargingBanner && !statusTextRaw.toLowerCase().includes('not')) {
         chargingBanner.style.display = 'flex';
         let chargeLimit = getValidState('muc_tieu_sac_target') || '--';
         const chargeTimeRemain = getValidState('thoi_gian_sac_con_lai') || getValidState('thoi_gian_sac_uoc_tinh');
@@ -993,10 +1099,10 @@ class VinFastDigitalTwin extends HTMLElement {
         
         if (chargeLimitEl) chargeLimitEl.innerText = chargeLimit !== '--' ? `${chargeLimit}%` : '--';
         if (chargeTimeEl) chargeTimeEl.innerText = (chargeTimeRemain && chargeTimeRemain !== 'unknown') ? `${chargeTimeRemain}` : '--';
-        if (chargeStatusTextEl) chargeStatusTextEl.innerText = statusTextRaw.includes('đầy') ? "Đã sạc đầy" : "Hệ thống đang sạc";
+        if (chargeStatusTextEl) chargeStatusTextEl.innerText = statusTextRaw.toLowerCase().includes('fully') ? "Fully Charged" : "Charging System Active";
         
         let pwr = getValidState('cong_suat_sac_tinh_toan_live') || getValidState('cong_suat_sac_trung_binh_lan_cuoi') || getValidState('cong_suat_sac_tram') || getValidState('cong_suat_sac');
-        if (powerEl) powerEl.innerText = pwr ? `${pwr} kW` : 'Đang tính...';
+        if (powerEl) powerEl.innerText = pwr ? `${pwr} kW` : 'Calculating...';
     } else if (chargingBanner) {
         chargingBanner.style.display = 'none';
     }
@@ -1030,22 +1136,22 @@ class VinFastDigitalTwin extends HTMLElement {
                         if (item.lbl && item.lbl.id === 'lbl-eff') {
                             if (this._effToggleState) {
                                 item.el.innerHTML = `${effRangePerPercent}<span class="stat-unit">km/1%</span>`;
-                                item.lbl.innerText = "Mỗi 1% Pin";
+                                item.lbl.innerText = "Per 1% Battery";
                                 item.lbl.style.color = "#3b82f6";
                             } else {
                                 item.el.innerHTML = `${effKwh}<span class="stat-unit">kWh/100km</span>`;
-                                item.lbl.innerText = "Hiệu suất TB";
+                                item.lbl.innerText = "Avg Efficiency";
                                 item.lbl.style.color = "#6b7280";
                             }
                         } else if (item.lbl) {
                             if (this._effToggleState) {
                                 item.el.innerHTML = `${range && range!=='--' ? range : '--'}<span class="stat-unit">km</span>`;
-                                item.lbl.innerText = "PHẠM VI";
+                                item.lbl.innerText = "RANGE";
                                 item.lbl.style.color = "#3b82f6";
                                 if(item.icon) { item.icon.setAttribute('icon', 'mdi:map-marker-distance'); item.icon.style.color = "#3b82f6"; }
                             } else {
                                 item.el.innerHTML = `${batt && batt!=='--' ? batt : '--'}<span class="stat-unit">%</span>`;
-                                item.lbl.innerText = "MỨC PIN";
+                                item.lbl.innerText = "BATTERY";
                                 item.lbl.style.color = "#10b981";
                                 if(item.icon) { item.icon.setAttribute('icon', 'mdi:battery-charging-60'); item.icon.style.color = "#10b981"; }
                             }
@@ -1068,23 +1174,23 @@ class VinFastDigitalTwin extends HTMLElement {
     renderStat('#vf-stat-batt-range', batt, '%');
     renderStat('#vf-stat-trip', trip, 'km');
     
-    // --- BẢN VÁ: PHANH TAY TỰ ĐỘNG CHO VF3 ---
+    // --- PATCH: AUTOMATIC PARKING BRAKE FOR VF3 ---
     let phanhTay = getValidState('phanh_tay') || getValidState('phanh_tay_dien_tu');
     if (carModel.toUpperCase().includes('VF3') || carModel.toUpperCase().includes('VF 3')) {
-        if (gear.includes('P')) phanhTay = 'Kéo phanh tay';
-        else if (gear.includes('D') || gear.includes('R') || gear.includes('N')) phanhTay = 'Nhả phanh tay';
+        if (gear.includes('P')) phanhTay = 'Engaged';
+        else if (gear.includes('D') || gear.includes('R') || gear.includes('N')) phanhTay = 'Released';
     }
 
     const sensorsToWatch = [
         { name: "Pin 12V", state: getValidState('pin_12v_ac_quy'), icon: "mdi:car-battery", unit: "%" },
-        { name: "Khóa tổng", state: getValidState('khoa_tong'), icon: "mdi:lock" },
-        { name: "An ninh", state: getValidState('trang_thai_an_ninh'), icon: "mdi:shield-car" },
+        { name: "Central Lock", state: getValidState('central_lock'), icon: "mdi:lock" },
+        { name: "Security", state: getValidState('security_status'), icon: "mdi:shield-car" },
         { name: "Phanh tay", state: phanhTay, icon: "mdi:car-brake-parking" },
-        { name: "Cảnh báo", state: getValidState('den_nhay_canh_bao'), icon: "mdi:car-light-alert" },
-        { name: "Điều hòa", state: getValidState('trang_thai_dieu_hoa'), icon: "mdi:air-conditioner" },
-        { name: "Cắm trại", state: getValidState('che_do_cam_trai_camp'), icon: "mdi:tent" },
-        { name: "Thú cưng", state: getValidState('che_do_thu_cung_pet'), icon: "mdi:paw" },
-        { name: "Giao xe (Valet)", state: getValidState('che_do_giao_xe_valet'), icon: "mdi:account-tie-hat" }
+        { name: "Hazard Lights", state: getValidState('hazard_warning_lights'), icon: "mdi:car-light-alert" },
+        { name: "Climate", state: getValidState('climate_control_status'), icon: "mdi:air-conditioner" },
+        { name: "Camp Mode", state: getValidState('camp_mode'), icon: "mdi:tent" },
+        { name: "Pet Mode", state: getValidState('pet_mode'), icon: "mdi:paw" },
+        { name: "Valet Mode", state: getValidState('valet_mode'), icon: "mdi:account-tie-hat" }
     ];
 
     let sensorHtml = '';
@@ -1095,10 +1201,10 @@ class VinFastDigitalTwin extends HTMLElement {
             let color = '#475569';
             const stLower = s.state.toLowerCase();
             
-            if (stLower.includes('mở khóa') || stLower.includes('tắt an ninh') || stLower.includes('nhả phanh tay') || (stLower.includes('bật') && s.name==='Cảnh báo') || (s.name==='Pin 12V' && parseFloat(s.state) < 40)) {
+            if (stLower.includes('unlocked') || stLower.includes('disarmed') || stLower.includes('released') || (stLower.includes('on') && s.name==='Hazard Lights') || (s.name==='12V Battery' && parseFloat(s.state) < 40)) {
                 color = '#ef4444'; 
-                if (s.name !== 'Điều hòa') warningCount++;
-            } else if (stLower.includes('khóa') || stLower.includes('bật an ninh') || stLower.includes('kéo phanh tay') || stLower.includes('đang bật')) {
+                if (s.name !== 'Climate') warningCount++;
+            } else if (stLower.includes('locked') || stLower.includes('armed') || stLower.includes('engaged') || stLower.includes('on')) {
                 color = '#10b981'; 
             }
 
@@ -1114,14 +1220,14 @@ class VinFastDigitalTwin extends HTMLElement {
     });
 
     const sensorListEl = this.querySelector('#sensor-list-container');
-    if (sensorListEl) sensorListEl.innerHTML = sensorHtml || `<div style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">Không có cảm biến khả dụng</div>`;
+    if (sensorListEl) sensorListEl.innerHTML = sensorHtml || `<div style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">No sensors available</div>`;
 
     const sensorSummaryEl = this.querySelector('#vf-stat-sensors');
     if (sensorSummaryEl) {
         if (warningCount > 0) {
-            sensorSummaryEl.innerHTML = `<span style="color:#ef4444; font-size:14px;">${warningCount} Cảnh báo</span>`;
+            sensorSummaryEl.innerHTML = `<span style="color:#ef4444; font-size:14px;">${warningCount} Warnings</span>`;
         } else {
-            sensorSummaryEl.innerHTML = `<span style="color:#10b981; font-size:14px;">Bình thường</span>`;
+            sensorSummaryEl.innerHTML = `<span style="color:#10b981; font-size:14px;">Normal</span>`;
         }
     }
 
@@ -1137,7 +1243,7 @@ class VinFastDigitalTwin extends HTMLElement {
         if (dropPct < 0) dropPct = 0; 
         tripDegradationHtml = `${dropPct.toFixed(1)}% <span style="font-size:10px; color:#94a3b8; font-weight:normal;">(Theo Trip)</span>`;
     } else {
-        tripDegradationHtml = `${getValidState('kha_nang_chai_pin_theo_range_tham_khao') || '--'}% <span style="font-size:10px; color:#94a3b8; font-weight:normal;">(Vòng đời)</span>`;
+        tripDegradationHtml = `${getValidState('kha_nang_chai_pin_theo_range_tham_khao') || '--'}% <span style="font-size:10px; color:#94a3b8; font-weight:normal;">(Lifetime)</span>`;
     }
 
     const dtRangeDropTripEl = this.querySelector('#dt-range-drop-trip');
@@ -1148,7 +1254,7 @@ class VinFastDigitalTwin extends HTMLElement {
     const totalSessions = parseInt(getValidState('tong_so_lan_sac')) || (pubSessions + homeSessions);
     
     const chargeCountEl = this.querySelector('#vf-stat-charge-count');
-    if(chargeCountEl) chargeCountEl.innerHTML = `${totalSessions}<span class="stat-unit">lần</span>`;
+    if(chargeCountEl) chargeCountEl.innerHTML = `${totalSessions}<span class="stat-unit"> sessions</span>`;
 
     const speedBandStr = getValidState('dai_toc_do_toi_uu_nhat');
     const speedElTarget = this.querySelector('#vf-stat-speed');
@@ -1185,7 +1291,7 @@ class VinFastDigitalTwin extends HTMLElement {
     if (dtTotalKwhEl) dtTotalKwhEl.innerText = `${getValidState('tong_dien_nang_da_sac') || '--'} kWh`;
     
     const dtTotalCostEl = this.querySelector('#dt-total-cost');
-    if (dtTotalCostEl) dtTotalCostEl.innerText = `${getValidState('tong_chi_phi_sac_quy_doi') || '--'} VNĐ`;
+    if (dtTotalCostEl) dtTotalCostEl.innerText = `${getValidState('estimated_total_charging_cost') || getValidState('tong_chi_phi_sac_quy_doi') || '--'}`;
 
     const dtTripAvgSpeedEl = this.querySelector('#dt-trip-avg-speed');
     if (dtTripAvgSpeedEl) dtTripAvgSpeedEl.innerText = `${getValidState('toc_do_tb_chuyen_di') || '--'} km/h`;
@@ -1198,14 +1304,14 @@ class VinFastDigitalTwin extends HTMLElement {
         let htmlChart = '';
         let maxVal = 0;
         let bars = [];
-        const sObj = hass.states[`sensor.${p}_dai_toc_do_toi_uu_nhat`];
+        const sObj = hass.states[`sensor.${p}_optimal_speed_range`] || hass.states[`sensor.${p}_dai_toc_do_toi_uu_nhat`];
         if (sObj && sObj.attributes) {
             for (let key in sObj.attributes) {
-                if (key.includes('Dải')) {
+                if (key.includes('Band')) {
                     let valStr = sObj.attributes[key];
                     let num = parseFloat(valStr.split(' ')[0]);
                     if (num > maxVal) maxVal = num;
-                    bars.push({label: key.replace('Dải ', '').replace(' km/h', ''), val: num});
+                    bars.push({label: key.replace('Band ', '').replace(' km/h', ''), val: num});
                 }
             }
         }
@@ -1230,9 +1336,9 @@ class VinFastDigitalTwin extends HTMLElement {
         if (sensorAddress && sensorAddress !== 'unknown') {
              addressEl.innerText = sensorAddress;
         } else if (lat && lon && lat > 0) {
-            addressEl.innerText = `Tọa độ: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            addressEl.innerText = `Coordinates: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
         } else {
-            addressEl.innerText = "Đang tìm vị trí...";
+            addressEl.innerText = "Locating vehicle...";
         }
     }
 

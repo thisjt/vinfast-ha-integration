@@ -172,121 +172,121 @@ VinFast architectures diverge across model generations:
 #### A. Common Telemetry (All Vehicles)
 | OMA Code | Entity Display Name | Unit | Type / Values | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `00006_00001_00000` | Vĩ độ (Latitude) | ° | Float | GPS Latitude |
-| `00006_00001_00001` | Kinh độ (Longitude) | ° | Float | GPS Longitude |
-| `00006_00001_00002` | Độ cao (Altitude) | m | Float | GPS Elevation above sea level |
-| `00005_00001_00030` | Phiên bản Phần mềm (FRP) | — | String | Firmware Release Package version |
-| `34196_00001_00004` | Phiên bản T-Box | — | String | Telematics Box firmware version |
-| `34181_00001_00007` | Biển số / Tên xe phụ | — | String | Vehicle license plate or nickname |
-| `34213_00001_00003` | Khóa tổng (Door Lock) | — | `1`=Locked, `0`=Unlocked | Central locking status (VF3/8/9) |
-| `34206_00001_00001` | Khóa tổng / Camp Mode | — | `1`/`0` | Lock status on VF5/6/7; Camp Mode on VF3/8/9 |
-| `34234_00001_00003` | Trạng thái An ninh | — | `1`/`2`=Armed, `0`=Disarmed | Anti-theft security alarm status |
-| `34186_00005_00004` | Đèn nháy cảnh báo | — | `1`=On, `0`=Off | Hazard warning flashers |
-| `34205_00001_00001` | Chế độ Giao xe (Valet) | — | `1`=On, `0`=Off | Valet service restricted mode |
-| `34207_00001_00001` | Chế độ Thú cưng (Pet) | — | `1`=On, `0`=Off | Pet comfort mode (climate on while locked) |
-| `10351_00002_00050` | Cửa tài xế | — | `0`=Closed, `1`=Open | Driver front door sensor |
-| `10351_00001_00050` | Cửa phụ | — | `0`=Closed, `1`=Open | Passenger front door sensor |
-| `10351_00006_00050` | Cốp sau | — | `0`=Closed, `1`=Open | Rear trunk / tailgate sensor |
-| `10351_00005_00050` | Nắp Capo | — | `0`=Closed, `1`=Open | Front frunk / hood sensor |
-| `34215_00002_00002` | Kính tài xế | — | `1`/`0`=Closed, `2`=Open | Driver power window position |
-| `34215_00001_00002` | Kính phụ | — | `1`/`0`=Closed, `2`=Open | Passenger power window position |
-| `34213_00003_00003` | Trạng thái Mô-tơ Kính | — | String | Window actuator motor state |
-| `34213_00002_00003` | Trạng thái Mô-tơ Cốp | — | String | Power liftgate motor state |
-| `34213_00004_00003` | Trạng thái nháy đèn pha | — | `1`=On, `0`=Off | High-beam headlight flash status |
-| `34184_00001_00004` | Trạng thái điều hòa | — | `0`=Off, `1`=On | HVAC system power state |
-| `34184_00001_00011` | Chế độ lấy gió | — | `0`=Fresh, `1`=Recirc | HVAC intake flap mode |
-| `34184_00001_00012` | Hướng gió điều hòa | — | `1`=Face, `2`=Face/Floor, `3`=Floor, `4`=Defrost/Floor | Air distribution vent mode |
-| `34184_00001_00009` | Sấy kính | — | `0`=Off, `1`=On | Front windshield defroster |
-| `34184_00001_00025` | Mức quạt gió | Mức | Integer (1–8) | Blower fan speed level |
-| `34184_00001_00041` | Mức độ làm lạnh | Mức | Integer | A/C compressor cooling intensity |
+| `00006_00001_00000` | Latitude | ° | Float | GPS Latitude |
+| `00006_00001_00001` | Longitude | ° | Float | GPS Longitude |
+| `00006_00001_00002` | Altitude | m | Float | GPS Elevation above sea level |
+| `00005_00001_00030` | Software Version (FRP) | — | String | Firmware Release Package version |
+| `34196_00001_00004` | T-Box Version | — | String | Telematics Box firmware version |
+| `34181_00001_00007` | License Plate / Secondary Name | — | String | Vehicle license plate or nickname |
+| `34213_00001_00003` | Central Door Lock | — | `1`=Locked, `0`=Unlocked | Central locking status (VF3/8/9) |
+| `34206_00001_00001` | Central Lock / Camp Mode | — | `1`/`0` | Lock status on VF5/6/7; Camp Mode on VF3/8/9 |
+| `34234_00001_00003` | Security Status | — | `1`/`2`=Armed, `0`=Disarmed | Anti-theft security alarm status |
+| `34186_00005_00004` | Hazard Warning Lights | — | `1`=On, `0`=Off | Hazard warning flashers |
+| `34205_00001_00001` | Valet Mode | — | `1`=On, `0`=Off | Valet service restricted mode |
+| `34207_00001_00001` | Pet Mode | — | `1`=On, `0`=Off | Pet comfort mode (climate on while locked) |
+| `10351_00002_00050` | Driver Door | — | `0`=Closed, `1`=Open | Driver front door sensor |
+| `10351_00001_00050` | Passenger Door | — | `0`=Closed, `1`=Open | Passenger front door sensor |
+| `10351_00006_00050` | Trunk | — | `0`=Closed, `1`=Open | Rear trunk / tailgate sensor |
+| `10351_00005_00050` | Front Hood (Frunk) | — | `0`=Closed, `1`=Open | Front frunk / hood sensor |
+| `34215_00002_00002` | Driver Window | — | `1`/`0`=Closed, `2`=Open | Driver power window position |
+| `34215_00001_00002` | Passenger Window | — | `1`/`0`=Closed, `2`=Open | Passenger power window position |
+| `34213_00003_00003` | Window Motor Status | — | String | Window actuator motor state |
+| `34213_00002_00003` | Trunk Motor Status | — | String | Power liftgate motor state |
+| `34213_00004_00003` | Headlight Flash Status | — | `1`=On, `0`=Off | High-beam headlight flash status |
+| `34184_00001_00004` | Climate Control Status | — | `0`=Off, `1`=On | HVAC system power state |
+| `34184_00001_00011` | Air Intake Mode | — | `0`=Fresh, `1`=Recirc | HVAC intake flap mode |
+| `34184_00001_00012` | HVAC Air Direction | — | `1`=Face, `2`=Face/Floor, `3`=Floor, `4`=Defrost/Floor | Air distribution vent mode |
+| `34184_00001_00009` | Windshield Defrost | — | `0`=Off, `1`=On | Front windshield defroster |
+| `34184_00001_00025` | Blower Fan Speed | Level | Integer (1–8) | Blower fan speed level |
+| `34184_00001_00041` | A/C Cooling Level | Level | Integer | A/C compressor cooling intensity |
 
 #### B. Rear Doors & Windows (4-Door Models)
 | OMA Code | Entity Display Name | Unit | Type / Values | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `10351_00004_00050` | Cửa sau tài xế | — | `0`=Closed, `1`=Open | Rear left door |
-| `10351_00003_00050` | Cửa sau phụ | — | `0`=Closed, `1`=Open | Rear right door |
-| `34215_00004_00002` | Kính sau tài xế | — | `1`/`0`=Closed, `2`=Open | Rear left power window |
-| `34215_00003_00002` | Kính sau phụ | — | `1`/`0`=Closed, `2`=Open | Rear right power window |
+| `10351_00004_00050` | Rear Driver Door | — | `0`=Closed, `1`=Open | Rear left door |
+| `10351_00003_00050` | Rear Passenger Door | — | `0`=Closed, `1`=Open | Rear right door |
+| `34215_00004_00002` | Rear Driver Window | — | `1`/`0`=Closed, `2`=Open | Rear left power window |
+| `34215_00003_00002` | Rear Passenger Window | — | `1`/`0`=Closed, `2`=Open | Rear right power window |
 
 #### C. Platform A Specifics (`VF3`, `VF5`, `VFe34`, `VF6`, `VF7`)
 | OMA Code | Entity Display Name | Unit | Description |
 | :--- | :--- | :--- | :--- |
-| `34183_00001_00009` | Phần trăm Pin | % | Main High-Voltage Traction Battery SoC |
-| `34183_00001_00011` | Quãng đường dự kiến | km | Estimated remaining driving range |
-| `34183_00001_00001` | Vị trí cần số | — | Gear Position (`1`=P, `2`=R, `3`=N, `4`=D) |
-| `34183_00001_00002` | Tốc độ hiện tại | km/h | Vehicle speed |
-| `34183_00001_00003` | Tổng ODO | km | Cumulative odometer reading |
-| `34183_00001_00010` | Trạng thái Lái (Ready) | — | Drive readiness (`2`=Not Ready, `3`=Ready to Drive) |
-| `34183_00001_00029` | Phanh tay điện tử | — | Electronic Parking Brake (`0`=Released, `1`=Engaged) |
-| `34183_00001_00035` | Công tắc Phanh chân | — | Brake pedal depression switch |
-| `34183_00001_00005` | Pin 12V (Ắc quy) | % | Auxiliary 12V lead-acid / LFP battery SoC |
-| `34220_00001_00001` | Sức khỏe pin (SOH) | % | Battery State Of Health from BMS |
-| `34193_00001_00031` | Cắm súng sạc (Plug) | — | Charge port physical connection (`1`=Plugged, `0`=Unplugged) |
-| `34193_00001_00005` | Trạng thái sạc | — | Charge state (`1`=Charging, `2`=Completed, `0`/`3`/`4`=Idle) |
-| `34193_00001_00007` | Thời gian sạc còn lại | min | Minutes until target charge reached |
-| `34193_00001_00026` | Thời gian sạc ước tính | min | Estimated duration to full charge |
-| `34193_00001_00013` | Giờ hoàn tất sạc dự kiến | — | Target completion timestamp |
-| `34193_00001_00032` | Relay hệ thống sạc | — | High-voltage charging contactor relay |
-| `34193_00001_00016` | Mã phiên sạc (Session ID) | — | Active charging session identifier |
-| `34183_00001_00007` | Nhiệt độ ngoài trời | °C | Ambient outdoor temperature sensor |
-| `34183_00001_00015` | Nhiệt độ trong xe | °C | Cabin interior temperature sensor |
-| `34224_00001_00005` | Nhiệt độ điều hòa cài đặt | °C | HVAC target setpoint temperature |
-| `34193_00001_00019` | Mục tiêu sạc (Target) | % | Target SoC limit (**VF 3**) |
-| `34193_00001_00014` | Mục tiêu sạc (Target) | % | Target SoC limit (**VF 5**) |
-| `34183_00001_00016`–`19` | Áp suất lốp (FL, FR, RL, RR)| bar | Tire Pressure Monitoring (**e34**, **VF6**, **VF7**) |
+| `34183_00001_00009` | Battery Percentage | % | Main High-Voltage Traction Battery SoC |
+| `34183_00001_00011` | Estimated Range | km | Estimated remaining driving range |
+| `34183_00001_00001` | Gear Selector Position | — | Gear Position (`1`=P, `2`=R, `3`=N, `4`=D) |
+| `34183_00001_00002` | Current Speed | km/h | Vehicle speed |
+| `34183_00001_00003` | Total Odometer | km | Cumulative odometer reading |
+| `34183_00001_00010` | Drive Status (Ready) | — | Drive readiness (`2`=Not Ready, `3`=Ready to Drive) |
+| `34183_00001_00029` | Electronic Parking Brake | — | Electronic Parking Brake (`0`=Released, `1`=Engaged) |
+| `34183_00001_00035` | Brake Pedal Switch | — | Brake pedal depression switch |
+| `34183_00001_00005` | 12V Auxiliary Battery | % | Auxiliary 12V lead-acid / LFP battery SoC |
+| `34220_00001_00001` | Battery Health (SOH) | % | Battery State Of Health from BMS |
+| `34193_00001_00031` | Charging Gun Plugged | — | Charge port physical connection (`1`=Plugged, `0`=Unplugged) |
+| `34193_00001_00005` | Charging Status | — | Charge state (`1`=Charging, `2`=Completed, `0`/`3`/`4`=Idle) |
+| `34193_00001_00007` | Remaining Charge Time | min | Minutes until target charge reached |
+| `34193_00001_00026` | Estimated Charge Duration | min | Estimated duration to full charge |
+| `34193_00001_00013` | Estimated Charge Completion | — | Target completion timestamp |
+| `34193_00001_00032` | Charge System Relay | — | High-voltage charging contactor relay |
+| `34193_00001_00016` | Charging Session ID | — | Active charging session identifier |
+| `34183_00001_00007` | Ambient Outdoor Temperature | °C | Ambient outdoor temperature sensor |
+| `34183_00001_00015` | Interior Cabin Temperature | °C | Cabin interior temperature sensor |
+| `34224_00001_00005` | HVAC Setpoint Temperature | °C | HVAC target setpoint temperature |
+| `34193_00001_00019` | Charge Target | % | Target SoC limit (**VF 3**) |
+| `34193_00001_00014` | Charge Target | % | Target SoC limit (**VF 5**) |
+| `34183_00001_00016`–`19` | Tire Pressure (FL, FR, RL, RR)| bar | Tire Pressure Monitoring (**e34**, **VF6**, **VF7**) |
 
 #### D. Platform B Specifics (`VF8`, `VF9`)
 | OMA Code | Entity Display Name | Unit | Description |
 | :--- | :--- | :--- | :--- |
-| `34180_00001_00011` | Phần trăm Pin | % | Main Traction Battery SoC |
-| `34180_00001_00007` | Quãng đường dự kiến | km | Estimated driving range |
-| `34180_00001_00010` | Tên định danh xe (MQTT) | — | Telemetry vehicle name / drive state |
-| `34187_00000_00000` | Vị trí cần số | — | Gear Position (`1`=P, `2`=R, `3`=N, `4`=D) |
-| `34188_00000_00000` | Tốc độ hiện tại | km/h | Vehicle speed |
-| `34199_00000_00000` | Tổng ODO | km | Cumulative odometer reading |
-| `34183_00000_00001` | Trạng thái sạc | — | Charge state (`1`=Charging, `2`=Completed, `0`=Idle) |
-| `34183_00000_00004` | Thời gian sạc còn lại | min | Minutes remaining to complete charge |
-| `34183_00000_00012` | Công suất sạc | kW | Live charging power |
-| `34183_00000_00015` | Điện áp sạc | V | High-voltage charging voltage |
-| `34183_00000_00016` | Dòng điện sạc | A | High-voltage charging current |
-| `34193_00001_00012` | Mục tiêu sạc (Target) | % | Target SoC charge limit |
-| `34190_00000_00001` | Áp suất lốp Trước Trái | bar | Front Left Tire Pressure |
-| `34190_00001_00001` | Áp suất lốp Trước Phải | bar | Front Right Tire Pressure |
-| `34190_00002_00001` | Áp suất lốp Sau Trái | bar | Rear Left Tire Pressure |
-| `34190_00003_00001` | Áp suất lốp Sau Phải | bar | Rear Right Tire Pressure |
+| `34180_00001_00011` | Battery Percentage | % | Main Traction Battery SoC |
+| `34180_00001_00007` | Estimated Range | km | Estimated driving range |
+| `34180_00001_00010` | Vehicle Identifier Name (MQTT) | — | Telemetry vehicle name / drive state |
+| `34187_00000_00000` | Gear Selector Position | — | Gear Position (`1`=P, `2`=R, `3`=N, `4`=D) |
+| `34188_00000_00000` | Current Speed | km/h | Vehicle speed |
+| `34199_00000_00000` | Total Odometer | km | Cumulative odometer reading |
+| `34183_00000_00001` | Charging Status | — | Charge state (`1`=Charging, `2`=Completed, `0`=Idle) |
+| `34183_00000_00004` | Remaining Charge Time | min | Minutes remaining to complete charge |
+| `34183_00000_00012` | Charging Power | kW | Live charging power |
+| `34183_00000_00015` | Charging Voltage | V | High-voltage charging voltage |
+| `34183_00000_00016` | Charging Current | A | High-voltage charging current |
+| `34193_00001_00012` | Charge Target | % | Target SoC charge limit |
+| `34190_00000_00001` | Tire Pressure Front Left | bar | Front Left Tire Pressure |
+| `34190_00001_00001` | Tire Pressure Front Right | bar | Front Right Tire Pressure |
+| `34190_00002_00001` | Tire Pressure Rear Left | bar | Rear Left Tire Pressure |
+| `34190_00003_00001` | Tire Pressure Rear Right | bar | Rear Right Tire Pressure |
 
 #### E. Virtual Analytical Sensors (`VIRTUAL_SENSORS`)
 These sensors do not map to a single raw OMA code; they are computed dynamically by the internal data science engine:
 | Sensor Key | Entity Display Name | Unit | Computation Formula / Logic |
 | :--- | :--- | :--- | :--- |
-| `api_vehicle_status` | Trạng thái hoạt động | — | Evaluates gear, motion state, and charging state ("Đang di chuyển", "Đang đỗ", "Đang sạc", etc.) |
-| `api_current_address` | Vị trí xe (Địa chỉ) | — | Reverse geocoded human address from OpenStreetMap Nominatim with 3-decimal grid caching |
-| `api_trip_distance` | Quãng đường chuyến đi | km | Accumulated distance calculated using Haversine formula across valid GPS points |
-| `api_trip_avg_speed` | Tốc độ TB chuyến đi | km/h | $\text{Trip Distance} / \text{Trip Duration (hours)}$ |
-| `api_trip_energy_used`| Điện năng tiêu thụ Trip | kWh | $\frac{\Delta\text{SoC}}{100} \times \text{Battery Capacity (kWh)}$ |
-| `api_trip_efficiency` | Hiệu suất tiêu thụ Trip | kWh/100km | $\frac{\text{Trip Energy (kWh)}}{\text{Trip Distance (km)}} \times 100$ |
-| `api_static_capacity` | Dung lượng pin thiết kế | kWh | Factory rated gross/usable battery capacity from model profile |
-| `api_static_range` | Quãng đường công bố | km | Factory rated standard range from model profile |
-| `api_soh_calculated` | Sức khỏe pin (SOH) | % | Verified real-world capacity vs. nominal capacity: $\frac{\text{Charged kWh} \times 0.92}{\Delta\text{SoC} / 100} / \text{Cap} \times 100$ |
-| `api_battery_degradation`| Độ chai pin (Theo SOH)| kWh | Capacity loss calculated from SOH degradation |
-| `api_est_range_degradation`| Khả năng chai pin (Range)| % | Estimated range loss based on lifetime average consumption vs. factory rating |
-| `api_lifetime_efficiency`| Hiệu suất TB xe | kWh/100km | $\frac{\text{Total Lifetime Energy Charged (kWh)}}{\text{Odometer (km)}} \times 100$ |
-| `api_calc_max_range` | Quãng đường thực tế 100%| km | Realistic driving range on a 100% charge based on actual driving consumption |
-| `api_calc_remain_range` | Quãng đường còn lại | km | Estimated range remaining based on dynamic consumption: $\text{km per 1\%} \times \text{Current SoC}$ |
-| `api_calc_range_per_percent`| Quãng đường / 1% pin | km | Measured distance traveled per 1% SoC drop during ongoing driving |
-| `api_live_charge_power`| Công suất sạc live | kW | Measured from session API or calculated via: $\frac{\Delta\text{SoC} / 100 \times \text{Capacity}}{\Delta\text{Time (hours)}}$ |
-| `api_last_charge_efficiency`| Hiệu suất sạc thực tế | % | $\frac{\text{Energy Added to Battery}}{\text{Energy Billed by Charging Station}} \times 100$ |
-| `api_total_charge_cost_est`| Tổng chi phí sạc quy đổi| VNĐ | $\text{Total Lifetime Energy Charged} \times \text{Cost per kWh}$ |
-| `api_trip_charge_cost`| Chi phí sạc chuyến đi | VNĐ | $\text{Trip Energy Used} \times \text{Cost per kWh}$ |
-| `api_total_gas_cost` | Tổng chi phí xăng tương đương| VNĐ | $\frac{\text{Total Odometer}}{\text{Gas km/L}} \times \text{Gasoline Price per Liter}$ |
-| `api_trip_gas_cost` | Chi phí xăng chuyến đi | VNĐ | $\frac{\text{Trip Distance}}{\text{Gas km/L}} \times \text{Gasoline Price per Liter}$ |
-| `api_total_charge_sessions`| Tổng số lần sạc | lần | Public charging sessions + Home charging sessions |
-| `api_public_charge_sessions`| Số lần sạc tại trạm | lần | Count of completed charging sessions retrieved from VinFast charging history API |
-| `api_home_charge_sessions`| Số lần sạc tại nhà | lần | Count of sessions terminated when distant from any public charging station or power $\le 11$ kW |
-| `api_home_charge_kwh` | Điện năng sạc tại nhà | kWh | Cumulative energy charged during home AC sessions |
-| `api_total_energy_charged`| Tổng điện năng đã sạc | kWh | Cumulative lifetime energy (Public + Home) |
-| `api_ai_advisor` | Cố vấn Xe điện AI | — | Contextual natural language advisory text from Google Gemini |
-| `api_security_warning`| Cảnh báo An ninh | — | Combined warning message: doors open, windows open, car unlocked while parked |
+| `api_vehicle_status` | Operating Status | — | Evaluates gear, motion state, and charging state ("Moving", "Parked", "Charging", etc.) |
+| `api_current_address` | Vehicle Address | — | Reverse geocoded human address from OpenStreetMap Nominatim with 3-decimal grid caching |
+| `api_trip_distance` | Trip Distance | km | Accumulated distance calculated using Haversine formula across valid GPS points |
+| `api_trip_avg_speed` | Trip Average Speed | km/h | $\text{Trip Distance} / \text{Trip Duration (hours)}$ |
+| `api_trip_energy_used`| Trip Energy Consumption | kWh | $\frac{\Delta\text{SoC}}{100} \times \text{Battery Capacity (kWh)}$ |
+| `api_trip_efficiency` | Trip Energy Efficiency | kWh/100km | $\frac{\text{Trip Energy (kWh)}}{\text{Trip Distance (km)}} \times 100$ |
+| `api_static_capacity` | Design Battery Capacity | kWh | Factory rated gross/usable battery capacity from model profile |
+| `api_static_range` | Announced Range Max | km | Factory rated standard range from model profile |
+| `api_soh_calculated` | Battery Health (SOH) | % | Verified real-world capacity vs. nominal capacity: $\frac{\text{Charged kWh} \times 0.92}{\Delta\text{SoC} / 100} / \text{Cap} \times 100$ |
+| `api_battery_degradation`| Battery Degradation (SOH)| kWh | Capacity loss calculated from SOH degradation |
+| `api_est_range_degradation`| Range Degradation Estimate (Range)| % | Estimated range loss based on lifetime average consumption vs. factory rating |
+| `api_lifetime_efficiency`| Average Consumption Efficiency | kWh/100km | $\frac{\text{Total Lifetime Energy Charged (kWh)}}{\text{Odometer (km)}} \times 100$ |
+| `api_calc_max_range` | Realistic Full Range (100%)| km | Realistic driving range on a 100% charge based on actual driving consumption |
+| `api_calc_remain_range` | Remaining Range by Efficiency | km | Estimated range remaining based on dynamic consumption: $\text{km per 1\%} \times \text{Current SoC}$ |
+| `api_calc_range_per_percent`| Distance per 1% Battery | km | Measured distance traveled per 1% SoC drop during ongoing driving |
+| `api_live_charge_power`| Live Calculated Charging Power | kW | Measured from session API or calculated via: $\frac{\Delta\text{SoC} / 100 \times \text{Capacity}}{\Delta\text{Time (hours)}}$ |
+| `api_last_charge_efficiency`| Real Charging Efficiency | % | $\frac{\text{Energy Added to Battery}}{\text{Energy Billed by Charging Station}} \times 100$ |
+| `api_total_charge_cost_est`| Estimated Total Charging Cost| VND | $\text{Total Lifetime Energy Charged} \times \text{Cost per kWh}$ |
+| `api_trip_charge_cost`| Trip Charging Cost | VND | $\text{Trip Energy Used} \times \text{Cost per kWh}$ |
+| `api_total_gas_cost` | Total Gasoline Cost Equivalent| VND | $\frac{\text{Total Odometer}}{\text{Gas km/L}} \times \text{Gasoline Price per Liter}$ |
+| `api_trip_gas_cost` | Trip Gasoline Cost Equivalent | VND | $\frac{\text{Trip Distance}}{\text{Gas km/L}} \times \text{Gasoline Price per Liter}$ |
+| `api_total_charge_sessions`| Total Charging Sessions | sessions | Public charging sessions + Home charging sessions |
+| `api_public_charge_sessions`| Public Station Charging Sessions | sessions | Count of completed charging sessions retrieved from VinFast charging history API |
+| `api_home_charge_sessions`| Home Charging Sessions | sessions | Count of sessions terminated when distant from any public charging station or power $\le 11$ kW |
+| `api_home_charge_kwh` | Home Charging Energy | kWh | Cumulative energy charged during home AC sessions |
+| `api_total_energy_charged`| Total Energy Charged | kWh | Cumulative lifetime energy (Public + Home) |
+| `api_ai_advisor` | EV AI Advisor | — | Contextual natural language advisory text from Google Gemini |
+| `api_security_warning`| Security Warning | — | Combined warning message: doors open, windows open, car unlocked while parked |
 | `api_debug_raw` | System Debug Raw | — | Count and timestamp of latest MQTT batch; full dictionary stored in entity attributes |
 
 ---
@@ -391,13 +391,13 @@ To prevent entity collisions in multi-car garages, all entity IDs and unique IDs
 2. **Maintenance & AI Optimization Buttons**:
    - `button.{model}_{vin}_fix_map`: Triggers `async_fix_all_historical_trips(force=True)`, re-running the hybrid map matching engine across all cached trips.
 3. **Vehicle Remote Commands (`ccaraccessmgmt/api/v2/remote/app/command`)**:
-   - `1`: Khóa cửa (Lock Doors)
-   - `2`: Mở cửa (Unlock Doors)
-   - `3`: Bấm còi (Honk Horn)
-   - `4`: Nháy đèn (Flash Headlights)
-   - `5`: Bật điều hòa (Turn On Climate)
-   - `6`: Tắt điều hòa (Turn Off Climate)
-   - `7`: Mở cốp (Open Power Liftgate)
+   - `1`: Lock Doors
+   - `2`: Unlock Doors
+   - `3`: Honk Horn
+   - `4`: Flash Headlights
+   - `5`: Turn On Climate
+   - `6`: Turn Off Climate
+   - `7`: Open Power Liftgate
    - `8` to `20`: Reserved Raw Commands for testing undocumented commands.
 
 ### 8.3 Important Observation on `device_tracker.py`
@@ -498,8 +498,8 @@ Because VinFast is a Vietnamese manufacturer, much of the internal documentation
 
 ### 11.3 Options Flow Configuration
 Clicking **Configure** on an existing VinFast integration entry allows adjusting runtime parameters without re-authenticating:
-- **Cost per kWh (`cost_per_kwh`)**: Electricity rate for cost calculations (default: `4,000` VNĐ/kWh).
-- **Gasoline Price (`gas_price`)**: Fuel price for comparison calculations (default: `20,000` VNĐ/Liter).
+- **Cost per kWh (`cost_per_kwh`)**: Electricity rate for cost calculations (default: `4,000` VND/kWh).
+- **Gasoline Price (`gas_price`)**: Fuel price for comparison calculations (default: `20,000` VND/Liter).
 - **Reference EV Consumption (`ev_kwh_per_km`)**: Overrides vehicle default kWh/km consumption.
 - **Reference Gas Consumption (`gas_km_per_liter`)**: Overrides benchmark petrol km/L.
 - **Gemini Model & Map Tokens**: Update API keys or switch AI models dynamically.
@@ -516,7 +516,7 @@ For contributors analyzing unmapped telemetry codes from new vehicle models or f
    - Open `custom_components/vinfast/const_common.py` (or the specific `const_vf*.py` file).
    - Add the new key using the standard tuple definition:
      ```python
-     "OBJECT_INSTANCE_RESOURCE": ("Tên Cảm Biến", "Đơn vị", "mdi:icon", "device_class")
+     "OBJECT_INSTANCE_RESOURCE": ("Sensor Display Name", "Unit", "mdi:icon", "device_class")
      ```
    - If the raw numeric value requires string translation (e.g., converting `0`/`1` to descriptive text), add a mapping case in `sensor.py` inside `_process_update()`.
 5. **Submit a Pull Request**: Share the newly decoded parameter with the community on GitHub!

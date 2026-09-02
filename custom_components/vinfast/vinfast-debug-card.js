@@ -1,7 +1,7 @@
 class VinFastDebugCard extends HTMLElement {
   setConfig(config) {
     if (!config.entity) {
-      throw new Error('Bạn cần khai báo entity của cảm biến System Debug Raw Data');
+      throw new Error('You must specify the entity for the System Debug Raw Data sensor');
     }
     this.config = config;
     this.activeTab = 'log'; 
@@ -12,19 +12,19 @@ class VinFastDebugCard extends HTMLElement {
     this._isFetching = false;
   }
 
-  // HÀM FETCH FILE JSON TRỰC TIẾP TỪ THƯ MỤC WWW
+  // FETCH JSON FILES DIRECTLY FROM THE WWW DIRECTORY
   async fetchDataDirectly(vin) {
     if (this._isFetching) return;
     this._isFetching = true;
     
     try {
-        // Tải file Changelog (Thêm Timestamp để chống Cache của trình duyệt)
+        // Load changelog file (Append timestamp to prevent browser caching)
         const resLog = await fetch(`/local/vinfast_changelog_${vin.toLowerCase()}.json?v=${new Date().getTime()}`);
         if (resLog.ok) {
             this._logData = await resLog.json();
         }
 
-        // Tải file State lấy Raw JSON
+        // Load state file to get Raw JSON
         const resState = await fetch(`/local/vinfast_state_${vin.toLowerCase()}.json?v=${new Date().getTime()}`);
         if (resState.ok) {
             const stateData = await resState.json();
@@ -35,10 +35,10 @@ class VinFastDebugCard extends HTMLElement {
             }
         }
         
-        // Cập nhật lại giao diện sau khi tải xong file
+        // Re-render UI after files load
         this.renderBody();
     } catch (e) {
-        console.error("VinFast Debug Card: Lỗi đọc file JSON", e);
+        console.error("VinFast Debug Card: Error reading JSON file", e);
     }
     
     this._isFetching = false;
@@ -50,11 +50,11 @@ class VinFastDebugCard extends HTMLElement {
     const stateObj = hass.states[entityId];
 
     if (!stateObj) {
-      this.innerHTML = `<ha-card><div style="padding: 20px; color: red;">Không tìm thấy thực thể: ${entityId}</div></ha-card>`;
+      this.innerHTML = `<ha-card><div style="padding: 20px; color: red;">Entity not found: ${entityId}</div></ha-card>`;
       return;
     }
 
-    // Trích xuất số VIN
+    // Extract VIN
     let vin = "unknown";
     const parts = entityId.split('_');
     if (parts.length > 1) {
@@ -67,13 +67,11 @@ class VinFastDebugCard extends HTMLElement {
       this.fetchDataDirectly(vin);
     }
 
-    // CHÚ Ý SỰ THAY ĐỔI Ở ĐÂY: 
-    // Chúng ta KHÔNG dùng stateObj.state để gán cho tiêu đề nữa.
-    // StateObj giờ chỉ đóng vai trò là "Cái chuông" báo hiệu xe vừa có dữ liệu mới.
+    // StateObj serves as an alert notification when the car receives new data
     if (stateObj.state !== this._lastState) {
         this._lastState = stateObj.state;
         
-        // Delay 500ms để đảm bảo Python đã ghi xong file JSON ra ổ cứng, tránh đọc hụt
+        // Delay 500ms to ensure Python has finished writing JSON to disk
         setTimeout(() => {
             this.fetchDataDirectly(vin);
         }, 500);
@@ -88,14 +86,14 @@ class VinFastDebugCard extends HTMLElement {
             <ha-icon icon="mdi:console-network" style="color:#10b981; margin-right:8px;"></ha-icon>
             VINFAST DEBUG CONSOLE
           </div>
-          <div id="debug-status-text" class="debug-status">Đang tải dữ liệu...</div>
+          <div id="debug-status-text" class="debug-status">Loading data...</div>
         </div>
         
         <div class="debug-toolbar">
-          <input type="text" id="debug-search" class="debug-search" placeholder="🔍 Nhập mã code (VD: 34213) hoặc giá trị để lọc...">
+          <input type="text" id="debug-search" class="debug-search" placeholder="🔍 Search code (e.g., 34213) or value to filter...">
           <div class="debug-tabs">
-            <button id="btn-tab-log" class="debug-tab active">Changelog (Lịch sử)</button>
-            <button id="btn-tab-raw" class="debug-tab">Raw JSON (Tất cả)</button>
+            <button id="btn-tab-log" class="debug-tab active">Changelog (History)</button>
+            <button id="btn-tab-raw" class="debug-tab">Raw JSON (All)</button>
           </div>
         </div>
 
@@ -121,7 +119,7 @@ class VinFastDebugCard extends HTMLElement {
       .debug-tab:hover { background: #334155; color: white;}
       .debug-tab.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8;}
       
-      /* Cho phép Copy Text */
+      /* Allow text selection */
       .debug-body { 
           padding: 12px; height: 400px; overflow-y: auto; 
           user-select: text !important; -webkit-user-select: text !important; cursor: text;
@@ -171,20 +169,20 @@ class VinFastDebugCard extends HTMLElement {
   }
 
   renderBody() {
-    // TỰ ĐỘNG ĐỒNG BỘ THỜI GIAN TRÊN HEADER VỚI DỮ LIỆU JSON
+    // Automatically sync header timestamp with JSON data
     const headerTitle = this.querySelector('#debug-status-text');
     if (headerTitle) {
         let totalCodes = Object.keys(this._rawJsonData).length;
         let latestTimeStr = "";
         
-        // Lấy chính xác thời gian của sự kiện mới nhất trong file JSON
+        // Get timestamp of latest event in JSON file
         if (Array.isArray(this._logData) && this._logData.length > 0) {
             let fullTime = this._logData[0].time;
             latestTimeStr = fullTime.includes(' ') ? fullTime.split(' ')[1] : fullTime;
         }
 
         if (totalCodes > 0) {
-            headerTitle.innerText = `Đã thu thập ${totalCodes} mã${latestTimeStr ? ' (Mới nhất: ' + latestTimeStr + ')' : ''}`;
+            headerTitle.innerText = `Collected ${totalCodes} codes${latestTimeStr ? ' (Latest: ' + latestTimeStr + ')' : ''}`;
         }
     }
 
@@ -193,7 +191,7 @@ class VinFastDebugCard extends HTMLElement {
         const viewLog = this.querySelector('#view-log');
         
         if (!Array.isArray(this._logData) || this._logData.length === 0) {
-            viewLog.innerHTML = `<div style="color:#64748b; text-align:center; margin-top:20px;">[ >_ Đang chờ dữ liệu Log... ]</div>`;
+            viewLog.innerHTML = `<div style="color:#64748b; text-align:center; margin-top:20px;">[ >_ Waiting for log data... ]</div>`;
             return;
         }
 
@@ -224,7 +222,7 @@ class VinFastDebugCard extends HTMLElement {
             `;
         });
 
-        if (html === '') html = `<div style="color:#64748b; text-align:center; margin-top:20px;">[ Không tìm thấy kết quả phù hợp ]</div>`;
+        if (html === '') html = `<div style="color:#64748b; text-align:center; margin-top:20px;">[ No matching results found ]</div>`;
         viewLog.innerHTML = html;
     }
 

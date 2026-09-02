@@ -2,27 +2,57 @@
   "config": {
     "step": {
       "user": {
-        "title": "Đăng nhập tài khoản VinFast",
-        "description": "Vui lòng nhập Email và Mật khẩu bạn dùng trên app VinFast.",
+        "title": "Log in to VinFast Account",
+        "description": "Please enter the Email and Password used in your VinFast mobile app.",
         "data": {
           "email": "Email",
-          "password": "Mật khẩu"
+          "password": "Password",
+          "region": "Region",
+          "language": "Language",
+          "gemini_api_key": "Google Gemini API Key (Optional)",
+          "mapbox_token": "Mapbox Access Token (Optional)",
+          "stadia_token": "Stadia Maps API Key (Optional)"
+        }
+      },
+      "model": {
+        "title": "Select AI Model",
+        "description": "Select the Google Gemini model to use for AI driver recommendations.",
+        "data": {
+          "gemini_model": "Gemini Model"
         }
       },
       "select_vehicle": {
-        "title": "Chọn xe của bạn",
-        "description": "Chúng tôi đã tìm thấy xe trong tài khoản của bạn. Vui lòng chọn chiếc xe bạn muốn tích hợp.",
+        "title": "Select Your Vehicle",
+        "description": "We found vehicles linked to your account. Please select the vehicle you want to integrate.",
         "data": {
-          "vin": "Danh sách xe"
+          "vin": "Vehicle List"
         }
       }
     },
     "error": {
-      "auth_error": "Sai Email hoặc Mật khẩu, hoặc lỗi kết nối đến máy chủ VinFast.",
-      "no_vehicles": "Không tìm thấy chiếc xe nào trong tài khoản này."
+      "auth_error": "Incorrect Email or Password, or failed to connect to VinFast servers.",
+      "no_vehicles": "No vehicles found in this account."
     },
     "abort": {
-      "already_configured": "Tài khoản này đã được cài đặt rồi."
+      "already_configured": "This account is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "VinFast Settings",
+        "description": "Configure regional options, AI advisor, and energy/fuel comparison rates.",
+        "data": {
+          "region": "Region",
+          "language": "Language",
+          "gemini_api_key": "Google Gemini API Key",
+          "gemini_model": "Gemini Model",
+          "mapbox_token": "Mapbox Access Token",
+          "stadia_token": "Stadia Maps API Key",
+          "cost_per_kwh": "Electricity Rate (VND or local currency / kWh)",
+          "gas_price": "Gasoline Benchmark Price (local currency / Liter)"
+        }
+      }
     }
   }
 }

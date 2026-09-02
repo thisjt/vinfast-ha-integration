@@ -11,7 +11,7 @@ from .const import (
     CONF_GEMINI_API_KEY, 
     CONF_REGION, 
     CONF_LANGUAGE,
-    CONF_MAPBOX_TOKEN,  # Chú ý: Nhớ thêm 2 biến này vào file const.py nhé
+    CONF_MAPBOX_TOKEN,
     CONF_STADIA_TOKEN
 )
 
@@ -19,22 +19,22 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_GEMINI_MODEL = "gemini_model"
 
-REGIONS = {"VN": "Việt Nam (VN)", "US": "United States (US)", "EU": "Europe (EU)"}
-LANGUAGES = {"vi": "Tiếng Việt (VI)", "en": "English (EN)"}
+REGIONS = {"VN": "Vietnam (VN)", "US": "United States (US)", "EU": "Europe (EU)"}
+LANGUAGES = {"en": "English (EN)", "vi": "Vietnamese (VI)"}
 
 def safe_int(val, default):
     try: return int(float(val))
     except (ValueError, TypeError): return default
 
 # =====================================================================
-# THUẬT TOÁN TỰ ĐỘNG QUÉT DANH SÁCH MODEL MỚI NHẤT TỪ GOOGLE GEMINI
+# AUTOMATIC SCANNING ALGORITHM FOR LATEST MODELS FROM GOOGLE GEMINI
 # =====================================================================
 def fetch_gemini_models_sync(api_key):
-    # Danh sách dự phòng nếu mạng lỗi hoặc người dùng không nhập Key
+    # Fallback list if network fails or user has not entered a key
     default_models = {
-        "gemini-2.5-flash": "Gemini 2.5 Flash (Khuyên dùng/Nhanh/Free)",
-        "gemini-2.5-pro": "Gemini 2.5 Pro (Cao cấp)",
-        "gemini-2.0-flash": "Gemini 2.0 Flash (Nhanh/Free)",
+        "gemini-2.5-flash": "Gemini 2.5 Flash (Recommended/Fast/Free)",
+        "gemini-2.5-pro": "Gemini 2.5 Pro (Advanced)",
+        "gemini-2.0-flash": "Gemini 2.0 Flash (Fast/Free)",
         "gemini-1.5-flash": "Gemini 1.5 Flash",
     }
     
@@ -54,18 +54,18 @@ def fetch_gemini_models_sync(api_key):
                 display = m.get("displayName", name)
                 methods = m.get("supportedGenerationMethods", [])
                 
-                # Chỉ lấy các model sinh text (Bỏ qua model nhúng/âm thanh/cũ)
+                # Only keep text generation models (skip embedding/audio/legacy models)
                 if "generateContent" in methods and "gemini" in name.lower() and "vision" not in name.lower():
-                    # Gắn tag phân loại thông minh
+                    # Attach friendly classification tags
                     if "flash" in name.lower():
-                        display = f"{display} (Nhanh/Free)"
+                        display = f"{display} (Fast/Free)"
                     elif "pro" in name.lower():
-                        display = f"{display} (Cao cấp)"
+                        display = f"{display} (Advanced)"
                     
                     models[name] = display
             
             if models:
-                # Thuật toán Sắp xếp: Ưu tiên bản 2.5 lên đầu -> Đến dòng Flash -> Các dòng khác
+                # Sorting Algorithm: Prioritize 2.5 on top -> Flash series -> Other series
                 sorted_models = dict(sorted(models.items(), key=lambda item: (
                     not ("2.5" in item[0]), 
                     not ("flash" in item[0]), 
@@ -74,7 +74,7 @@ def fetch_gemini_models_sync(api_key):
                 return sorted_models
                 
     except Exception as e:
-        _LOGGER.error(f"VinFast: Lỗi khi lấy danh sách Gemini models động: {e}")
+        _LOGGER.error(f"VinFast: Error fetching dynamic Gemini models: {e}")
         
     return default_models
 
@@ -85,17 +85,17 @@ class VinFastConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._setup_data = {}
 
     async def async_step_user(self, user_input=None):
-        # BƯỚC 1: NHẬP TÀI KHOẢN VÀ CÁC API KEY
+        # STEP 1: ENTER CREDENTIALS AND API KEYS
         if user_input is not None:
             self._setup_data.update(user_input)
             return await self.async_step_model()
 
-        # Bổ sung Mapbox và Stadia vào Form khởi tạo
+        # Add Mapbox and Stadia tokens to initialization form
         data_schema = vol.Schema({
             vol.Required(CONF_EMAIL): str,
             vol.Required(CONF_PASSWORD): str,
             vol.Required(CONF_REGION, default="VN"): vol.In(REGIONS),
-            vol.Required(CONF_LANGUAGE, default="vi"): vol.In(LANGUAGES),
+            vol.Required(CONF_LANGUAGE, default="en"): vol.In(LANGUAGES),
             vol.Optional(CONF_GEMINI_API_KEY, default=""): str,
             vol.Optional(CONF_MAPBOX_TOKEN, default=""): str,
             vol.Optional(CONF_STADIA_TOKEN, default=""): str,
@@ -103,7 +103,7 @@ class VinFastConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=data_schema)
 
     async def async_step_model(self, user_input=None):
-        # BƯỚC 2: TỰ ĐỘNG LOAD MODEL VÀ CHỐT LƯU
+        # STEP 2: AUTOMATICALLY LOAD MODEL AND FINALIZE
         if user_input is not None:
             self._setup_data.update(user_input)
             await self.async_set_unique_id(self._setup_data[CONF_EMAIL].lower())
@@ -112,7 +112,7 @@ class VinFastConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         api_key = self._setup_data.get(CONF_GEMINI_API_KEY, "")
         
-        # Chạy ngầm hàm lấy API để không làm treo giao diện Home Assistant
+        # Run API fetch in executor job to prevent freezing Home Assistant UI
         models = await self.hass.async_add_executor_job(fetch_gemini_models_sync, api_key)
         
         data_schema = vol.Schema({
@@ -137,18 +137,18 @@ class VinFastOptionsFlowHandler(config_entries.OptionsFlow):
         data = self._config_entry.data
         
         current_region = opts.get(CONF_REGION, data.get(CONF_REGION, "VN"))
-        current_lang = opts.get(CONF_LANGUAGE, data.get(CONF_LANGUAGE, "vi"))
+        current_lang = opts.get(CONF_LANGUAGE, data.get(CONF_LANGUAGE, "en"))
         current_gemini_key = opts.get(CONF_GEMINI_API_KEY, data.get(CONF_GEMINI_API_KEY, ""))
         current_gemini_model = opts.get(CONF_GEMINI_MODEL, data.get(CONF_GEMINI_MODEL, "gemini-2.5-flash"))
         current_mapbox = opts.get(CONF_MAPBOX_TOKEN, data.get(CONF_MAPBOX_TOKEN, ""))
         current_stadia = opts.get(CONF_STADIA_TOKEN, data.get(CONF_STADIA_TOKEN, ""))
 
-        # Cập nhật lại danh sách Model mỗi khi người dùng bấm Cấu hình lại
+        # Refresh model list whenever user clicks Configure
         available_models = await self.hass.async_add_executor_job(fetch_gemini_models_sync, current_gemini_key)
         if current_gemini_model not in available_models:
             available_models[current_gemini_model] = current_gemini_model
 
-        # Bổ sung Mapbox và Stadia vào Form Cấu hình lại (Configure)
+        # Add Mapbox and Stadia tokens to Options (Configure) Form
         options_schema = vol.Schema({
             vol.Required(CONF_REGION, default=current_region): vol.In(REGIONS),
             vol.Required(CONF_LANGUAGE, default=current_lang): vol.In(LANGUAGES),

@@ -1,110 +1,100 @@
-🚗 VinFast Smart Integration cho Home Assistant
+# 🚗 VinFast Smart Integration for Home Assistant
 
-Tích hợp (Integration) siêu việt đưa chiếc ô tô điện VinFast của bạn vào hệ sinh thái Home Assistant. 
-Không chỉ đơn thuần là kéo thông số, Component này được trang bị các thuật toán Khoa học Dữ liệu (Data Science) đỉnh cao để biến Home Assistant thành một "Trung tâm phân tích viễn trắc" (Telemetry Hub) mạnh mẽ, hoạt động 24/7 mà không cần mở App điện thoại.
+A powerful, full-featured integration bringing your VinFast electric vehicle into the Home Assistant ecosystem.
+Far beyond simple data pulling, this component is equipped with advanced data science and telemetry algorithms to turn Home Assistant into a real-time vehicle monitoring hub operating 24/7 without needing the official mobile app open.
 
-✨ Các tính năng cốt lõi (Core Features)
+---
 
-🚀 Dữ liệu Thời gian thực (Real-time MQTT): 
+## ✨ Core Features
 
-Sử dụng kết nối WebSockets trực tiếp tới AWS IoT Core của VinFast với cơ chế tự động vượt rào (Bypass) để duy trì luồng dữ liệu 24/7. Tự động trả lời ping từ T-Box của xe.
+- **🚀 Real-Time Telemetry (MQTT & WebSockets)**:
+  Connects directly to VinFast's AWS IoT Core via WebSockets with automatic bypass mechanisms to maintain a persistent 24/7 data stream. Automatically responds to ping packets from the vehicle's onboard T-Box.
 
-🧠 Phân tích Động học Lượng tử (Smart Profiling): 
+- **🧠 Smart Dynamic Efficiency Profiling**:
+  Features intelligent frequency sampling algorithms. Automatically filters out red light stops and idling, accurately determining the vehicle's "Optimal Speed Band" for every 1% battery dropped.
 
-Thuật toán đếm tần suất mẫu tốc độ (Frequency Sampling) thông minh. Tự động loại bỏ nhiễu do dừng đèn đỏ và phân tích chính xác "Dải tốc độ tối ưu nhất" mỗi khi pin sụt 1%.
+- **🔋 Instant Smart Charging Management**:
+  Detects charger plug-in and unplug events within seconds via MQTT. Automatically runs background threads to retrieve charging history (kWh added, efficiency, session duration) upon session completion.
 
-🔋 Quản lý Sạc Tức thời (Smart Charging): 
+- **⏱️ Intelligent Trip Management**:
+  Automatically detects new driving trips when wheels begin moving. Closes and archives trip logs (distance, estimated electric vs. petrol cost, average speed) once the vehicle has been parked for 30 minutes.
 
-Bắt sự kiện Cắm/Rút súng sạc trong vài giây thông qua MQTT. Tự động tạo luồng ngầm để lấy hóa đơn sạc (Số kWh, Hiệu suất) từ máy chủ sau khi chốt phiên sạc.
+- **🗺️ Anti-Flicker GPS Tracking**:
+  Utilizes 11-meter satellite drift filtering and OpenStreetMap reverse geocoding to keep the `device_tracker` entity rock solid when parked in garages, saving Home Assistant database resources.
 
-⏱️ Quản lý Chuyến đi: 
+- **🎮 Dynamic Remote Commands**:
+  Provides button entities for Door Lock/Unlock, Climate Control, Horn, and Headlights. Standardizes entity IDs in `[model]_[vin]_[sensor_name]` format to seamlessly support multi-vehicle garages without collision.
 
-Tự động nhận diện chuyến đi mới khi bánh xe lăn. Chốt sổ chuyến đi (Quãng đường, Chi phí điện/xăng quy đổi, Vận tốc trung bình) nếu xe đỗ tĩnh quá 30 phút.
+- **🤖 EV AI Advisor (Optional Google Gemini Integration)**:
+  Analyzes weather anomalies, trip consumption spikes, and driving habits to provide real-time proactive recommendations.
 
-🗺️ GPS Tĩnh tâm (Anti-flicker Tracking): 
+---
 
-Thuật toán làm tròn sai số vệ tinh (11 mét) để tọa độ device_tracker không bị nhảy loạn xạ khi xe đang đỗ tĩnh trong gara, giúp tiết kiệm tài nguyên cho Home Assistant.
+## 📥 Installation via HACS (Recommended)
 
-🎮 Điều khiển Từ xa Động (Dynamic Remote): 
+The easiest way to install and receive automatic updates is through HACS (Home Assistant Community Store):
 
-Tích hợp các nút bấm Mở khóa, Bật điều hòa, Tìm xe... Cấu trúc Entity ID được chuẩn hóa dạng [model]_[vin] giúp quản lý nhiều xe cùng lúc không bị xung đột.
+1. Open Home Assistant and navigate to **HACS** in the left sidebar.
+2. Select **Integrations**.
+3. Click the three dots (menu) in the top-right corner and select **Custom repositories**.
+4. Fill in the following:
+   - **Repository**: `https://github.com/thangnd85/vinfast-connected-car`
+   - **Category**: `Integration`
+5. Click **Add**.
+6. Close the dialog. You will now see **VinFast** listed. Click it and select **Download**.
+7. ⚠️ **Important**: Restart your Home Assistant instance.
 
-📥 Hướng dẫn Cài đặt qua HACS (Khuyên dùng)
+---
 
-Cách dễ nhất để cài đặt và nhận các bản cập nhật tự động là sử dụng HACS (Home Assistant Community Store).
+## ⚙️ Configuration
 
-1) Mở Home Assistant, truy cập vào menu HACS ở cột bên trái.
+Once installed and restarted:
 
-2) Chọn mục Integrations (Tích hợp).
+1. Navigate to **Settings** -> **Devices & Services**.
+2. Click **Add Integration** in the lower-right corner.
+3. Search for **VinFast** and select it.
+4. Enter your VinFast App credentials (Email, Password, Region, and Language). All credentials are saved locally in your Home Assistant instance.
 
-3) Bấm vào biểu tượng 3 chấm ở góc trên cùng bên phải, chọn Custom repositories (Kho lưu trữ tùy chỉnh).
+Home Assistant will automatically authenticate, retrieve your VIN(s), and generate all sensors and buttons with standard naming:
+```
+sensor.[model]_[vin]_[sensor_name] (e.g., sensor.vf8_abcd1234_battery_percentage)
+```
 
-4) Điền các thông tin sau:
+---
 
-Repository: [https://github.com/thangnd85/vinfast-connected-car]
+## 🛠️ Options & Cost Calculation
 
-Category: Chọn Integration.
+This integration allows you to calculate charging costs and compare them against equivalent petrol consumption in real-time.
+Under **Devices & Services** -> **VinFast**, click **Configure** to adjust:
 
-5) Bấm Add (Thêm).
+- **Electricity Price**: Default 4,000 VND/kWh (or local equivalent).
+- **Petrol Fuel Price**: Default 20,000 VND/L (or local equivalent).
+- **EV Reference Consumption**: (kWh/100km).
+- **Petrol Reference Consumption**: (km/L).
+- **Gemini API Key & Model**: For the EV AI Advisor.
 
-Đóng hộp thoại, lúc này bạn sẽ thấy Tích hợp "VinFast" xuất hiện trên màn hình HACS. Bấm vào nó và chọn Download (Tải về).
+---
 
-⚠️ Quan trọng: Khởi động lại Home Assistant của bạn.
+## 🎨 Dashboard / Digital Twin Card
 
-⚙️ Cấu hình Tích hợp (Configuration)
-Sau khi cài đặt và khởi động lại, bạn tiến hành đăng nhập vào xe:
+This repository contains the backend core integration.
+For a luxury 3D Digital Twin vehicle dashboard, interactive Leaflet route map, and animated telemetry indicators, install our custom Lovelace card:
 
-1) Vào Cài đặt (Settings) -> Thiết bị & Dịch vụ (Devices & Services).
+👉 [VinFast Digital Twin Card](https://github.com/thangnd85/vinfast-digital-twin-card)
 
-2) Bấm nút Thêm tích hợp (Add Integration) ở góc dưới bên phải.
+<img width="484" alt="Digital Twin Overview" src="https://github.com/user-attachments/assets/cd5410a9-936f-459e-ba8f-a7628413b85c" />
+<img width="484" alt="Battery & Efficiency Gauges" src="https://github.com/user-attachments/assets/ca1d18dc-8d4d-46f9-a87e-57c492bffb17" />
+<img width="485" alt="Speed Band Efficiency" src="https://github.com/user-attachments/assets/9c972cde-e56d-49d9-b7f9-f9e1ec05fba3" />
+<img width="484" alt="Interactive Leaflet GPS Map" src="https://github.com/user-attachments/assets/fd32dc0c-70e1-4619-977c-49c19a3a2424" />
+<img width="484" alt="Charging History" src="https://github.com/user-attachments/assets/11f68c2d-4bdc-4003-8bdf-63b0e54c0600" />
+<img width="484" alt="Security & Tire Pressure" src="https://github.com/user-attachments/assets/a2f4a13a-4609-4833-9838-a163d9ff4b3f" />
 
-3) Gõ VinFast vào ô tìm kiếm và chọn nó.
+---
 
-4) Nhập Email và Mật khẩu tài khoản App VinFast của bạn. (Chỉ lưu trong Home Assistant, không gửi đến nơi nào khác)
+## 🛡️ Disclaimer
 
-Home Assistant sẽ tự động quét, lấy mã VIN và sinh ra toàn bộ Cảm biến (Sensor) & Nút bấm (Button) với cấu trúc chuẩn:
+This project is developed by the open-source community and is **NOT** an official product of, nor certified or affiliated with VinFast Auto Ltd.
 
-sensor.[model]_[vin]_[tên_cảm_biến] (VD: sensor.vf8_abcd1234_phan_tram_pin).
+All telematics queries, data retrieval, and remote commands (Lock/Unlock, Climate, etc.) communicate via the reverse-engineered APIs of the VinFast mobile app. Users assume all responsibility and risk when using this integration with their vehicle.
 
-🛠️ Cấu hình Tùy chọn nâng cao (Options)
-Tích hợp này cho phép bạn tính toán chi phí sạc và so sánh với xe xăng theo thời gian thực.
-Tại màn hình Quản lý Tích hợp VinFast, bấm vào nút Cấu hình (Configure) để thay đổi:
-
-- Giá điện: Mặc định 4000 VNĐ/kWh.
-
-- Giá xăng quy đổi: Mặc định 20.000 VNĐ/Lít.
-
-- Mức tiêu thụ Điện tham chiếu (kWh/km).
-
-- Mức tiêu thụ Xăng tham chiếu (km/Lít).
-
-🎨 Giao diện điều khiển (Frontend / Dashboard)
-Kho lưu trữ này chỉ chứa mã nguồn Backend (Core Component) sinh ra các thực thể.
-Để có giao diện Digital Twin mô phỏng xe 3D và các bảng thống kê xịn xò, vui lòng truy cập và cài đặt Custom Card tại kho lưu trữ Frontend của chúng tôi:
-
-👉 [https://github.com/thangnd85/vinfast-digital-twin-card]
-
-🛡️ Tuyên bố Miễn trừ trách nhiệm (Disclaimer)
-
-Dự án này được phát triển bởi cộng đồng Open Source và KHÔNG phải là sản phẩm, cũng như không được chứng nhận hay liên kết chính thức với VinFast Auto.
-
-Mọi hành động tương tác, lấy dữ liệu và ra lệnh điều khiển từ xa (Mở khóa, Bật AC...) đều gọi qua API nội bộ của Ứng dụng di động VinFast. Người dùng hoàn toàn tự chịu trách nhiệm về mọi rủi ro (nếu có) đối với phương tiện của mình khi sử dụng tích hợp này.
-
-Mã nguồn cam kết không lưu trữ bất kỳ thông tin cá nhân hay mật khẩu nào ngoài phạm vi của bộ nhớ Home Assistant cục bộ của bạn.
-
-
-Để có giao diện đẹp, đọc thêm:
-
-[https://github.com/thangnd85/vinfast-digital-twin-card]
-
-<img width="484"  alt="image" src="https://github.com/user-attachments/assets/cd5410a9-936f-459e-ba8f-a7628413b85c" />
-
-<img width="484" alt="image" src="https://github.com/user-attachments/assets/ca1d18dc-8d4d-46f9-a87e-57c492bffb17" />
-<img width="485" alt="image" src="https://github.com/user-attachments/assets/9c972cde-e56d-49d9-b7f9-f9e1ec05fba3" />
-
-<img width="484" alt="image" src="https://github.com/user-attachments/assets/fd32dc0c-70e1-4619-977c-49c19a3a2424" />
-
-<img width="484" alt="image" src="https://github.com/user-attachments/assets/11f68c2d-4bdc-4003-8bdf-63b0e54c0600" />
-
-<img width="484"  alt="image" src="https://github.com/user-attachments/assets/a2f4a13a-4609-4833-9838-a163d9ff4b3f" />
-
+This integration does not transmit credentials or vehicle telemetry to any third party beyond the official VinFast cloud infrastructure and your chosen local Home Assistant installation.

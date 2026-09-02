@@ -14,7 +14,7 @@ from .map_matching import async_process_route, moving_average_smooth
 _LOGGER = logging.getLogger(__name__)
 
 class VinFastAPI:
-    def __init__(self, email, password, vin=None, vehicle_name="Xe VinFast", region="VN", lang="vi", options=None, gemini_api_key=""):
+    def __init__(self, email, password, vin=None, vehicle_name="VinFast EV", region="VN", lang="en", options=None, gemini_api_key=""):
         self.email = email
         self.password = password
         self.region = region
@@ -38,11 +38,11 @@ class VinFastAPI:
         self._running = False
         self.callbacks = []
         
-        ai_state = ("Hệ thống AI đang chờ..." if self.lang == "vi" else "AI is waiting...") if self.gemini_api_key else "DISABLED"
+        ai_state = "AI is waiting..." if self.gemini_api_key else "DISABLED"
         
         self._last_data = {
-            "api_vehicle_status": "Đang kết nối..." if self.lang == "vi" else "Connecting...",
-            "api_current_address": "Đang tải..." if self.lang == "vi" else "Loading...",
+            "api_vehicle_status": "Connecting...",
+            "api_current_address": "Loading...",
             "api_trip_route": "[]",
             "api_nearby_stations": "[]",
             "api_trip_distance": 0.0,
@@ -62,10 +62,10 @@ class VinFastAPI:
             "api_home_charge_kwh": 0.0,
             "api_home_charge_sessions": 0,
             "api_ai_advisor": ai_state,
-            "api_security_warning": "An toàn" if self.lang == "vi" else "Safe",
+            "api_security_warning": "Safe",
             "api_calc_range_per_percent": 0.0,
             "api_est_range_degradation": 0.0,
-            "api_debug_raw": "Chờ kết nối MQTT..." if self.lang == "vi" else "Waiting for MQTT..."
+            "api_debug_raw": "Waiting for MQTT..."
         }  
         
         self._is_moving = False
@@ -128,7 +128,7 @@ class VinFastAPI:
     def start_mqtt(self): self.mqtt.start()
     def send_remote_command(self, cmd, params=None): return self.auth.send_remote_command(cmd, params)
     
-    # KẾT NỐI HÀM NÚT BẤM (BUTTON.PY) GỌI TẢI LẠI TRẠM SẠC
+    # BIND BUTTON.PY HANDLER TO REFRESH CHARGING STATIONS
     def fetch_nearby_stations(self, force=True): return self.auth.fetch_nearby_stations(force=force)
 
     def _update_vehicle_name(self, candidate_name):
@@ -212,7 +212,7 @@ class VinFastAPI:
         mapbox_token = self.options.get("mapbox_token", "")
         stadia_token = self.options.get("stadia_token", "")
 
-        _LOGGER.warning(f"VinFast: [TRIP {trip_id}] Bắt đầu đẩy {len(raw_route)} tọa độ lên lưới AI Map Matching...")
+        _LOGGER.warning(f"VinFast: [TRIP {trip_id}] Processing {len(raw_route)} coordinates with AI Map Matching...")
         smoothed_route = await async_process_route(self.hass, raw_route, mapbox_token, stadia_token)
 
         trip_file = target_trip_file if target_trip_file else os.path.join(WWW_DIR, f"vinfast_trips_{self.vin.lower()}.json")
@@ -236,13 +236,13 @@ class VinFastAPI:
             updated = await self.hass.async_add_executor_job(update_json_file)
             
             if updated:
-                _LOGGER.warning(f"VinFast: [TRIP {trip_id}] -> GHI FILE JSON THÀNH CÔNG!")
+                _LOGGER.warning(f"VinFast: [TRIP {trip_id}] -> TRIP SAVED TO JSON SUCCESSFULLY!")
                 if getattr(self, '_last_data', {}).get("api_trip_route") and "archive" not in trip_file:
                     self._last_data["api_trip_route"] = json.dumps(smoothed_route)
                     self.trigger_callbacks()
                     
         except Exception as e:
-            _LOGGER.error(f"VinFast: Lỗi khi ghi Cache nắn đường: {e}")
+            _LOGGER.error(f"VinFast: Error writing map-matched cache: {e}")
 
     async def async_fix_all_historical_trips(self, force=False):
         vin_str = self.vin.lower()
@@ -284,7 +284,7 @@ class VinFastAPI:
             except Exception as e: pass
                 
         if total_fixed > 0:
-            _LOGGER.warning(f"VinFast: HOÀN TẤT NẮN {total_fixed} CHUYẾN ĐI (Bao gồm cả Archive)!")
+            _LOGGER.warning(f"VinFast: COMPLETED OPTIMIZING {total_fixed} TRIPS (Including Archives)!")
 
     def _load_state(self):
         if not self.vin: return
@@ -328,7 +328,7 @@ class VinFastAPI:
         
         vn = str(self._last_data.get("api_vehicle_name", ""))
         if vn.lower() in ["0", "1", "unknown", "none", "", "vinfast"]:
-            self._last_data["api_vehicle_name"] = self.vehicle_model_display or "Xe VinFast"
+            self._last_data["api_vehicle_name"] = self.vehicle_model_display or "VinFast EV"
             
         if hasattr(self, 'hass') and self.hass:
             asyncio.run_coroutine_threadsafe(self.async_fix_all_historical_trips(force=False), self.hass.loop)
@@ -416,4 +416,4 @@ class VinFastAPI:
                         self.hass.loop
                     )
         except Exception as e: 
-            _LOGGER.error(f"VinFast: Lỗi lưu chuyến đi: {e}")
+            _LOGGER.error(f"VinFast: Error saving trip: {e}")
