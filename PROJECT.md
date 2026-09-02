@@ -47,6 +47,7 @@ The integration dynamically detects vehicle models from the user profile (`marke
 | **VF 7** | 75.30 kWh | 499 km | 0.16 kWh/km | 13.3 km/L (~7.52 L/100km) | Platform A (special lock code `34206`) |
 | **VF 8** | 87.70 kWh | 471 km | 0.19 kWh/km | 11.1 km/L (~9.00 L/100km) | Platform B (Unique OMA scheme) |
 | **VF 9** | 123.00 kWh | 580 km | 0.22 kWh/km | 9.5 km/L (~10.5 L/100km) | Platform B (Unique OMA scheme) |
+| **VF MPV 7 / Limo Green** | 60.13 kWh | 450 km | 0.14 kWh/km | 13.8 km/L (~7.25 L/100km) | Platform A (5 doors, TPMS) |
 
 ---
 
@@ -107,7 +108,7 @@ flowchart TD
 | `const.py` | 57 | Region configuration schemas, default device identifiers, file system paths, command mappings. |
 | `const_common.py` | 153 | Universal sensor definitions, virtual analytical sensors, Platform A and Platform B OMA base definitions. |
 | `model_registry.py` | 23 | Vehicle model parser and router returning exact specification profiles and sensor registries. |
-| `const_vf3.py` ... `const_vf9.py` | 3–35 ea. | Specific battery capacities, reference efficiencies, and model-specific sensor overrides. |
+| `const_vf3.py` ... `const_vf9.py`, `const_mpv7.py` | 3–35 ea. | Specific battery capacities, reference efficiencies, and model-specific sensor overrides. |
 | `api.py` | 419 | Central state coordinator, analytical formulas (SOH, degradation, efficiency), JSON checkpoint storage. |
 | `api_auth.py` | 381 | Auth0 login, proprietary HMAC request signatures, AWS SigV4 signed URL generation, charging REST APIs. |
 | `api_mqtt.py` | 675 | Paho-MQTT WebSocket client, heartbeat keep-alives, OMA-LWM2M deserialization, trip and charging state machines. |
