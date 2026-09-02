@@ -14,7 +14,7 @@ from .map_matching import async_process_route, moving_average_smooth
 _LOGGER = logging.getLogger(__name__)
 
 class VinFastAPI:
-    def __init__(self, email, password, vin=None, vehicle_name="VinFast EV", region="VN", lang="en", options=None, gemini_api_key=""):
+    def __init__(self, email, password, vin=None, vehicle_name="VinFast EV", region="PH", lang="en", options=None, gemini_api_key=""):
         self.email = email
         self.password = password
         self.region = region
@@ -26,13 +26,16 @@ class VinFastAPI:
         self.vehicle_model_display = "Unknown" 
         self.options = options or {}
         
-        cfg = REGION_CONFIG.get(self.region, REGION_CONFIG["VN"])
+        cfg = REGION_CONFIG.get(self.region, REGION_CONFIG["PH"])
         self.auth0_domain = cfg["AUTH0_DOMAIN"]
         self.auth0_client_id = cfg["AUTH0_CLIENT_ID"]
+        self.auth0_audience = cfg.get("AUTH0_AUDIENCE", cfg["API_BASE"])
+        self.auth0_realm = cfg.get("AUTH0_REALM", "Username-Password-Authentication")
         self.api_base = cfg["API_BASE"]
         self.aws_region = cfg["AWS_REGION"]
         self.cognito_pool_id = cfg["COGNITO_POOL_ID"]
         self.iot_endpoint = cfg["IOT_ENDPOINT"]
+        self.currency = cfg.get("CURRENCY", "PHP" if self.region == "PH" else "VND")
         
         self.access_token = None
         self._running = False
@@ -193,16 +196,19 @@ class VinFastAPI:
             if rpp > 0 and batt_pct > 0:
                 self._last_data["api_calc_remain_range"] = round(rpp * batt_pct, 1)
 
-            cost_per_kwh = safe_float(self.options.get("cost_per_kwh", 4000))
-            gas_price = safe_float(self.options.get("gas_price", 20000))
+            cfg = REGION_CONFIG.get(self.region, REGION_CONFIG.get("PH", {}))
+            default_kwh = cfg.get("DEFAULT_COST_PER_KWH", 15.0 if self.region == "PH" else 4000.0)
+            default_gas = cfg.get("DEFAULT_GAS_PRICE", 75.0 if self.region == "PH" else 20000.0)
+            cost_per_kwh = safe_float(self.options.get("cost_per_kwh", default_kwh))
+            gas_price = safe_float(self.options.get("gas_price", default_gas))
             gas_km_per_liter = getattr(self, 'gas_km_per_liter', 15.0)
 
             total_kwh_charged = safe_float(self._last_data.get("api_total_energy_charged", 0))
-            self._last_data["api_total_charge_cost_est"] = round(total_kwh_charged * cost_per_kwh)
+            self._last_data["api_total_charge_cost_est"] = round(total_kwh_charged * cost_per_kwh, 2)
 
             odo = safe_float(self._last_data.get("34183_00001_00003", self._last_data.get("34199_00000_00000", 0)))
             if odo > 0 and gas_km_per_liter > 0:
-                self._last_data["api_total_gas_cost"] = round((odo / gas_km_per_liter) * gas_price)
+                self._last_data["api_total_gas_cost"] = round((odo / gas_km_per_liter) * gas_price, 2)
 
         except Exception: pass
 

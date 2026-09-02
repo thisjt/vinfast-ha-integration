@@ -67,8 +67,8 @@ sensor.[model]_[vin]_[sensor_name] (e.g., sensor.vf8_abcd1234_battery_percentage
 This integration allows you to calculate charging costs and compare them against equivalent petrol consumption in real-time.
 Under **Devices & Services** -> **VinFast**, click **Configure** to adjust:
 
-- **Electricity Price**: Default 4,000 VND/kWh (or local equivalent).
-- **Petrol Fuel Price**: Default 20,000 VND/L (or local equivalent).
+- **Electricity Price**: Default 15.0 PHP/kWh (or 4,000 VND/kWh).
+- **Petrol Fuel Price**: Default 75.0 PHP/L (or 20,000 VND/L).
 - **EV Reference Consumption**: (kWh/100km).
 - **Petrol Reference Consumption**: (km/L).
 - **Gemini API Key & Model**: For the EV AI Advisor.

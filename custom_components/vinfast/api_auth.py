@@ -46,14 +46,29 @@ class AuthManager:
 
     def login(self):
         url = f"https://{self.core.auth0_domain}/oauth/token"
-        res = self._safe_request("POST", url, json={
+        audience = getattr(self.core, "auth0_audience", self.core.api_base)
+        payload = {
             "client_id": self.core.auth0_client_id, "grant_type": "password",
             "username": self.core.email, "password": self.core.password,
-            "scope": "openid profile email offline_access", "audience": self.core.api_base
-        }, timeout=15) 
+            "scope": "openid profile email offline_access", "audience": audience
+        }
+        realm = getattr(self.core, "auth0_realm", None)
+        if realm:
+            payload["realm"] = realm
+
+        res = self._safe_request("POST", url, json=payload, timeout=15)
         if res and res.status_code == 200:
             self.core.access_token = res.json()["access_token"]
             return self.core.access_token
+
+        # Fallback without realm if realm parameter was rejected
+        if realm and (not res or res.status_code != 200):
+            payload.pop("realm", None)
+            res = self._safe_request("POST", url, json=payload, timeout=15)
+            if res and res.status_code == 200:
+                self.core.access_token = res.json()["access_token"]
+                return self.core.access_token
+
         return None
 
     def get_vehicles(self):

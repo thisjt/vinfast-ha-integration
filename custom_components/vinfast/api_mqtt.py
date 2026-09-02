@@ -390,13 +390,15 @@ class MQTTManager:
                             core._last_data["api_trip_energy_used"] = round(energy_used, 2)
                             core._last_data["api_trip_efficiency"] = round((energy_used / final_trip_dist) * 100, 2)
                             
-                            cost_per_kwh = safe_float(core.options.get("cost_per_kwh", 4000))
-                            core._last_data["api_trip_charge_cost"] = round(energy_used * cost_per_kwh)
+                            default_kwh = 15.0 if getattr(core, 'region', '') == "PH" else 4000.0
+                            cost_per_kwh = safe_float(core.options.get("cost_per_kwh", default_kwh))
+                            core._last_data["api_trip_charge_cost"] = round(energy_used * cost_per_kwh, 2)
 
+                    default_gas = 75.0 if getattr(core, 'region', '') == "PH" else 20000.0
                     gas_km_per_liter = getattr(core, 'gas_km_per_liter', 15.0)
-                    gas_price = safe_float(core.options.get("gas_price", 20000))
+                    gas_price = safe_float(core.options.get("gas_price", default_gas))
                     if gas_km_per_liter > 0:
-                        core._last_data["api_trip_gas_cost"] = round((final_trip_dist / gas_km_per_liter) * gas_price)
+                        core._last_data["api_trip_gas_cost"] = round((final_trip_dist / gas_km_per_liter) * gas_price, 2)
 
         except Exception: pass
 

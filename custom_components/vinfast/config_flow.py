@@ -19,11 +19,15 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_GEMINI_MODEL = "gemini_model"
 
-REGIONS = {"VN": "Vietnam (VN)", "US": "United States (US)", "EU": "Europe (EU)"}
+REGIONS = {"PH": "Philippines (PH)", "VN": "Vietnam (VN)", "US": "United States (US)", "EU": "Europe (EU)"}
 LANGUAGES = {"en": "English (EN)", "vi": "Vietnamese (VI)"}
 
 def safe_int(val, default):
     try: return int(float(val))
+    except (ValueError, TypeError): return default
+
+def safe_float(val, default):
+    try: return float(val)
     except (ValueError, TypeError): return default
 
 # =====================================================================
@@ -94,7 +98,7 @@ class VinFastConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema({
             vol.Required(CONF_EMAIL): str,
             vol.Required(CONF_PASSWORD): str,
-            vol.Required(CONF_REGION, default="VN"): vol.In(REGIONS),
+            vol.Required(CONF_REGION, default="PH"): vol.In(REGIONS),
             vol.Required(CONF_LANGUAGE, default="en"): vol.In(LANGUAGES),
             vol.Optional(CONF_GEMINI_API_KEY, default=""): str,
             vol.Optional(CONF_MAPBOX_TOKEN, default=""): str,
@@ -136,12 +140,15 @@ class VinFastOptionsFlowHandler(config_entries.OptionsFlow):
         opts = self._config_entry.options
         data = self._config_entry.data
         
-        current_region = opts.get(CONF_REGION, data.get(CONF_REGION, "VN"))
+        current_region = opts.get(CONF_REGION, data.get(CONF_REGION, "PH"))
         current_lang = opts.get(CONF_LANGUAGE, data.get(CONF_LANGUAGE, "en"))
         current_gemini_key = opts.get(CONF_GEMINI_API_KEY, data.get(CONF_GEMINI_API_KEY, ""))
         current_gemini_model = opts.get(CONF_GEMINI_MODEL, data.get(CONF_GEMINI_MODEL, "gemini-2.5-flash"))
         current_mapbox = opts.get(CONF_MAPBOX_TOKEN, data.get(CONF_MAPBOX_TOKEN, ""))
         current_stadia = opts.get(CONF_STADIA_TOKEN, data.get(CONF_STADIA_TOKEN, ""))
+
+        default_kwh = 15.0 if current_region == "PH" else 4000.0
+        default_gas = 75.0 if current_region == "PH" else 20000.0
 
         # Refresh model list whenever user clicks Configure
         available_models = await self.hass.async_add_executor_job(fetch_gemini_models_sync, current_gemini_key)
@@ -156,8 +163,8 @@ class VinFastOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_GEMINI_MODEL, default=current_gemini_model): vol.In(available_models),
             vol.Optional(CONF_MAPBOX_TOKEN, default=current_mapbox): str,
             vol.Optional(CONF_STADIA_TOKEN, default=current_stadia): str,
-            vol.Required("cost_per_kwh", default=safe_int(opts.get("cost_per_kwh"), 4000)): vol.Coerce(int),
-            vol.Required("gas_price", default=safe_int(opts.get("gas_price"), 20000)): vol.Coerce(int),
+            vol.Required("cost_per_kwh", default=safe_float(opts.get("cost_per_kwh"), default_kwh)): vol.Coerce(float),
+            vol.Required("gas_price", default=safe_float(opts.get("gas_price"), default_gas)): vol.Coerce(float),
         })
         
         return self.async_show_form(step_id="init", data_schema=options_schema)

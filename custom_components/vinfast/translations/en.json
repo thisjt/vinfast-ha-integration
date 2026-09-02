@@ -49,8 +49,8 @@
           "gemini_model": "Gemini Model",
           "mapbox_token": "Mapbox Access Token",
           "stadia_token": "Stadia Maps API Key",
-          "cost_per_kwh": "Electricity Rate (VND or local currency / kWh)",
-          "gas_price": "Gasoline Benchmark Price (local currency / Liter)"
+          "cost_per_kwh": "Electricity Rate (PHP, VND, or local currency / kWh)",
+          "gas_price": "Gasoline Benchmark Price (PHP, VND, or local currency / Liter)"
         }
       }
     }

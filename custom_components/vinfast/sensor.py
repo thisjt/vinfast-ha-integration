@@ -19,6 +19,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         active_dict.update(api._active_sensors)
 
     for device_key, (name, unit, icon, device_class) in active_dict.items():
+        if device_class == "monetary":
+            unit = getattr(api, "currency", "PHP" if getattr(api, "region", "") == "PH" else "VND")
         sensors.append(VinFastSensor(api, device_key, name, unit, icon, device_class))
         
     async_add_entities(sensors)

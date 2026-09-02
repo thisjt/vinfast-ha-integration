@@ -490,16 +490,16 @@ Because VinFast is a Vietnamese manufacturer, much of the internal documentation
 1. In Home Assistant, go to **Settings** $\rightarrow$ **Devices & Services** $\rightarrow$ **Add Integration**.
 2. Search for **VinFast** and fill out the configuration dialog:
    - **Email & Password**: VinFast mobile app account credentials.
-   - **Region**: Select `VN` (Vietnam), `US` (United States), or `EU` (Europe).
-   - **Language**: Select `vi` (Vietnamese) or `en` (English).
+   - **Region**: Select `PH` (Philippines), `VN` (Vietnam), `US` (United States), or `EU` (Europe). Default is `PH`.
+   - **Language**: Select `en` (English) or `vi` (Vietnamese). Default is `en`.
    - **Google Gemini API Key** *(Optional)*: For AI advisor features.
    - **Mapbox / Stadia API Tokens** *(Optional)*: For high-accuracy map matching.
 3. If a Gemini API key is supplied, step 2 dynamically queries available models from Google and prompts for model selection (`gemini-2.5-flash`, `gemini-2.5-pro`, etc.).
 
 ### 11.3 Options Flow Configuration
 Clicking **Configure** on an existing VinFast integration entry allows adjusting runtime parameters without re-authenticating:
-- **Cost per kWh (`cost_per_kwh`)**: Electricity rate for cost calculations (default: `4,000` VND/kWh).
-- **Gasoline Price (`gas_price`)**: Fuel price for comparison calculations (default: `20,000` VND/Liter).
+- **Cost per kWh (`cost_per_kwh`)**: Electricity rate for cost calculations (default: `15.0` PHP/kWh for PH, `4,000` VND/kWh for VN).
+- **Gasoline Price (`gas_price`)**: Fuel price for comparison calculations (default: `75.0` PHP/Liter for PH, `20,000` VND/Liter for VN).
 - **Reference EV Consumption (`ev_kwh_per_km`)**: Overrides vehicle default kWh/km consumption.
 - **Reference Gas Consumption (`gas_km_per_liter`)**: Overrides benchmark petrol km/L.
 - **Gemini Model & Map Tokens**: Update API keys or switch AI models dynamically.
