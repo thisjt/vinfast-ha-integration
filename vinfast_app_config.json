@@ -6,7 +6,7 @@
         "android_vf_auto_base_url": "https://vinfastauto.com/",
         "android_vf_om_base_url": "https://om-backend-dev.azurewebsites.net/app/v1/",
         "vf_om_username": "omapi@app",
-        "vf_om_password": "Vinf@st#2021!&",
+        "vf_om_password": "***REDACTED***",
         "vf_faq_base_url": "https://stg-cms-v2.vinfastauto.com/",
         "faq_token": "e5e3b054d70900fb914b622cde884506",
         "auth0_client_id": "QxeAC955IEDXBRcQGikSBAGXBUWKnstx",
